@@ -1,8 +1,11 @@
+/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.csproj.AssemblyReference.cache
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.GeneratedMSBuildEditorConfig.editorconfig
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.AssemblyInfoInputs.cache
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.AssemblyInfo.cs
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.csproj.CoreCompileInputs.cache
+/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.MvcApplicationPartsAssemblyInfo.cs
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.MvcApplicationPartsAssemblyInfo.cache
+/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.sourcelink.json
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/appsettings.Development.json
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/appsettings.json
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/EzKzr.MockServer.staticwebassets.endpoints.json
@@ -11,13 +14,12 @@
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/EzKzr.MockServer.runtimeconfig.json
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/EzKzr.MockServer.dll
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/EzKzr.MockServer.pdb
+/Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/EzKzr.MockServer.xml
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/Microsoft.AspNetCore.OpenApi.dll
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/Microsoft.OpenApi.dll
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/Swashbuckle.AspNetCore.Swagger.dll
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/bin/Debug/net9.0/Swashbuckle.AspNetCore.SwaggerUI.dll
-/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.csproj.AssemblyReference.cache
-/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.MvcApplicationPartsAssemblyInfo.cs
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/scopedcss/bundle/EzKzr.MockServer.styles.css
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/staticwebassets.build.json
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/staticwebassets.development.json
@@ -31,7 +33,7 @@
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.Mo.5D6D3394.Up2Date
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.dll
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/refint/EzKzr.MockServer.dll
+/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.xml
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.pdb
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.genruntimeconfig.cache
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/ref/EzKzr.MockServer.dll
-/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.sourcelink.json

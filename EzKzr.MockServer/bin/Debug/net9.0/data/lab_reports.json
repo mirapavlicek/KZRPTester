@@ -16,5 +16,23 @@
         "AbnormalFlag": "N"
       }
     ]
+  },
+  {
+    "Header": {
+      "Rid": "string",
+      "Issued": "2025-08-20T16:51:29.593Z",
+      "Laboratory": "string",
+      "OrderId": "string"
+    },
+    "Results": [
+      {
+        "Code": "string",
+        "Text": "string",
+        "Value": "string",
+        "Unit": "string",
+        "ReferenceRange": "string",
+        "AbnormalFlag": "string"
+      }
+    ]
   }
 ]

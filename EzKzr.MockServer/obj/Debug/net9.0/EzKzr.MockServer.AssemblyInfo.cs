@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EzKzr.MockServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+92d3265f836df097180c4997d4a15759269a8e11")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+270a40aec47559862c8250c6c94ebfb4971b67e2")]
 [assembly: System.Reflection.AssemblyProductAttribute("EzKzr.MockServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EzKzr.MockServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

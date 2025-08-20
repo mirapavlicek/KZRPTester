@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EzKzr.MockServer</name>
+    </assembly>
+    <members>
+        <member name="P:EzKzr.MockServer.Models.PatientSummaryHeader.Gender">
+            <summary>M/Z/X</summary>
+        </member>
+    </members>
+</doc>

@@ -17,5 +17,23 @@
     ],
     "Outcome": "P\u0159evoz",
     "Destination": "Nemocnice Alfa a.s."
+  },
+  {
+    "Id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "Rid": "string",
+    "Started": "2025-08-20T16:52:39.958Z",
+    "Reason": "string",
+    "Vitals": {
+      "Systolic": 0,
+      "Diastolic": 0,
+      "HeartRate": 0,
+      "Spo2": 0,
+      "Temperature": 0
+    },
+    "Interventions": [
+      "string"
+    ],
+    "Outcome": "string",
+    "Destination": "string"
   }
 ]

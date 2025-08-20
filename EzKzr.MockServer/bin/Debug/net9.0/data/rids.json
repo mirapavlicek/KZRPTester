@@ -4,6 +4,17 @@
     "GivenName": "Karel",
     "FamilyName": "Test",
     "DateOfBirth": "1975-03-14",
-    "Created": "2025-08-20T16:32:40.323175Z"
+    "Created": "2025-08-20T16:32:40.323175Z",
+    "IsTemporary": false,
+    "PromotedToRid": null
+  },
+  {
+    "Rid": "D242533378",
+    "GivenName": "",
+    "FamilyName": "",
+    "DateOfBirth": "0001-01-01",
+    "Created": "2025-08-20T17:44:23.071455Z",
+    "IsTemporary": true,
+    "PromotedToRid": null
   }
 ]

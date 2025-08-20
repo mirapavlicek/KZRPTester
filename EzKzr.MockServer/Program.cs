@@ -5,6 +5,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using EzKzr.MockServer.Infrastructure;
+using EzKzr.MockServer.Models;
+using EzKzr.MockServer.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Routing;
@@ -49,7 +52,12 @@ public static class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(c =>
+{
+    var asm = System.Reflection.Assembly.GetExecutingAssembly();
+    var xml = Path.Combine(AppContext.BaseDirectory, $"{asm.GetName().Name}.xml");
+    if (File.Exists(xml)) c.IncludeXmlComments(xml, includeControllerXmlComments: true);
+});
 
         builder.Services.Configure<JsonOptions>(o =>
         {
@@ -111,6 +119,72 @@ public static class Program
         {
             var items = new[] { new CiselnikItem("P", "Cestovní pas"), new CiselnikItem("OP", "Občanský průkaz"), new CiselnikItem("RP", "Povolení k pobytu") };
             return Ok(items, zadostId, "OK", popis: "CiselnikDruhDokladu");
+        });
+        ciselnik.MapGet("/modality", (Guid zadostId, string? ucel, DateTime? datum) =>
+        {
+            var items = new[]
+            {
+                new CiselnikItem("XR","Rentgen"),
+                new CiselnikItem("CT","CT"),
+                new CiselnikItem("MR","MRI"),
+                new CiselnikItem("US","Ultrazvuk"),
+                new CiselnikItem("NM","Nukleární medicína"),
+                new CiselnikItem("PET","PET"),
+                new CiselnikItem("MG","Mamografie"),
+                new CiselnikItem("DX","Skiagrafie")
+            };
+            return Ok(items, zadostId, "OK", popis: "CiselnikModality");
+        });
+
+        ciselnik.MapGet("/laboratorni_test", (Guid zadostId, string? ucel, DateTime? datum) =>
+        {
+            var items = new[]
+            {
+                new CiselnikItem("718-7","Hemoglobin"),
+                new CiselnikItem("2339-0","Glukóza"),
+                new CiselnikItem("4548-4","HbA1c"),
+                new CiselnikItem("2951-2","Sodík"),
+                new CiselnikItem("14682-9","CRP")
+            };
+            return Ok(items, zadostId, "OK", popis: "CiselnikLaboratorniTest");
+        });
+
+        ciselnik.MapGet("/order_status", (Guid zadostId, string? ucel, DateTime? datum) =>
+        {
+            var items = new[]
+            {
+                new CiselnikItem("new","Nová"),
+                new CiselnikItem("received","Přijata"),
+                new CiselnikItem("in-progress","Zpracovává se"),
+                new CiselnikItem("completed","Dokončena"),
+                new CiselnikItem("cancelled","Zrušena")
+            };
+            return Ok(items, zadostId, "OK", popis: "CiselnikOrderStatus");
+        });
+
+        ciselnik.MapGet("/ems_outcome", (Guid zadostId, string? ucel, DateTime? datum) =>
+        {
+            var items = new[]
+            {
+                new CiselnikItem("transport","Převoz"),
+                new CiselnikItem("treat-on-scene","Ošetření na místě"),
+                new CiselnikItem("refused-care","Odmítnutí péče"),
+                new CiselnikItem("death-on-scene","Úmrtí na místě")
+            };
+            return Ok(items, zadostId, "OK", popis: "CiselnikEmsOutcome");
+        });
+
+        ciselnik.MapGet("/odbornost", (Guid zadostId, string? ucel, DateTime? datum) =>
+        {
+            var items = new[]
+            {
+                new CiselnikItem("101","Všeobecný praktický lékař"),
+                new CiselnikItem("202","Vnitřní lékařství"),
+                new CiselnikItem("501","Radiologie"),
+                new CiselnikItem("705","Kardiologie"),
+                new CiselnikItem("302","Chirurgie")
+            };
+            return Ok(items, zadostId, "OK", popis: "CiselnikOdbornost");
         });
 
         // ----- KRPZS -----
@@ -601,6 +675,110 @@ return Created(body.ZadostData, zadostId, popis: "EMS Record přijat");
             Db.SaveRids(Db.Rids);
             return Ok(new { rid }, zadostId, "OK", popis: "RID vygenerován");
         });
+        // --- DRID generátor ---
+        krp.MapPost("/drid/generate/{zadostId:guid}", (Guid zadostId, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var drid = RidService.GenerateDrid(Db.Rids);
+            Db.Rids.Add(new RidRecord
+            {
+                Rid = drid,
+                GivenName = "",
+                FamilyName = "",
+                DateOfBirth = default,
+                Created = DateTime.UtcNow,
+                IsTemporary = true
+            });
+            Db.SaveRids(Db.Rids);
+            return Ok(new { drid }, zadostId, "OK", popis: "DRID vygenerován");
+        });
+
+        // --- Založení pacienta (volitelně s DRID -> promoce na trvalý RID) ---
+        krp.MapPost("/pacient/{zadostId:guid}", (Guid zadostId, CreatePatient body) =>
+        {
+            var errs = ValidateCommon(zadostId, body.ZadostInfo?.Ucel, body.ZadostInfo?.Datum).ToList();
+            if (body.ZadostData == null) errs.Add("ZadostData je povinné.");
+            else
+            {
+                if (string.IsNullOrWhiteSpace(body.ZadostData.GivenName)) errs.Add("GivenName je povinné.");
+                if (string.IsNullOrWhiteSpace(body.ZadostData.FamilyName)) errs.Add("FamilyName je povinné.");
+                if (string.IsNullOrWhiteSpace(body.ZadostData.Gender)) errs.Add("Gender je povinné.");
+            }
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var rid = string.IsNullOrWhiteSpace(body.ZadostData!.Rid)
+                ? RidService.Generate(Db.Rids)
+                : body.ZadostData!.Rid!;
+
+            if (Db.Rids.Any(r => r.Rid == rid))
+                return Bad(new[] { "Zadaný RID již existuje." }, zadostId, subStav: "Validace");
+
+            // Pokud přišla DRID -> promovat
+            if (!string.IsNullOrWhiteSpace(body.ZadostData!.Drid))
+            {
+                var dr = Db.Rids.FirstOrDefault(r => r.Rid == body.ZadostData!.Drid);
+                if (dr is null || !dr.IsTemporary)
+                    return Bad(new[] { "DRID neexistuje nebo není dočasný." }, zadostId, subStav: "Validace");
+                dr.IsTemporary = false;
+                dr.PromotedToRid = rid;
+            }
+
+            var rec = new RidRecord
+            {
+                Rid = rid,
+                GivenName = body.ZadostData!.GivenName,
+                FamilyName = body.ZadostData!.FamilyName,
+                DateOfBirth = body.ZadostData!.DateOfBirth,
+                Created = DateTime.UtcNow,
+                IsTemporary = false
+            };
+            Db.Rids.Add(rec);
+            Db.SaveRids(Db.Rids);
+
+            // zároveň vytvoř PatientSummary z hlavičky
+            var ps = new PatientSummary
+            {
+                Header = new PatientSummaryHeader
+                {
+                    Rid = rid,
+                    GivenName = body.ZadostData!.GivenName,
+                    FamilyName = body.ZadostData!.FamilyName,
+                    DateOfBirth = body.ZadostData!.DateOfBirth,
+                    Gender = body.ZadostData!.Gender!.ToUpperInvariant()
+                },
+                Body = new PatientSummaryBody()
+            };
+            Db.PatientSummaries.Add(ps);
+            Db.SavePatientSummaries(Db.PatientSummaries);
+
+            return Created(new { rid, patient = ps.Header }, zadostId, popis: "Pacient založen");
+        });
+
+        // --- Získání pacienta přes KRP (alternativa k /ps/rid) ---
+        krp.MapGet("/pacient/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(rid)) errs.Add("rid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var psu = PatientSummaries.FirstOrDefault(x => x.Header.Rid == rid);
+            if (psu is null) return NotFound("Pacient nenalezen.", zadostId);
+            return Ok(psu, zadostId, "OK", popis: "KRP Pacient");
+        });
+
+        // --- Čtení DRID z evidence ---
+        krp.MapGet("/drid/{zadostId:guid}", (Guid zadostId, string drid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(drid)) errs.Add("drid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var rec = Db.Rids.FirstOrDefault(x => x.Rid == drid);
+            if (rec is null) return NotFound("DRID nenalezen.", zadostId);
+            return Ok(rec, zadostId, "OK", popis: "KRP DRID");
+        });
 
         krp.MapGet("/rid/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
         {
@@ -1057,500 +1235,5 @@ return Ok(n, zadostId, "OK", popis: "ZrusOdberNotifikaci");
         if (string.IsNullOrWhiteSpace(ico)) e.Add("ico je povinné.");
         else if (ico.Length != 8 || !ico.All(char.IsDigit)) e.Add("ico musí mít přesně 8 číslic.");
         return e;
-    }
-}
-// ==== MODELS, REQUESTY A JEDNODUCHÉ ÚLOŽIŠTĚ DB ====
-// Pozn.: vše je v namespacu EzKzr.MockServer díky file-scoped namespace nahoře.
-
-public record CiselnikItem(string Kod, string Nazev);
-
-// --- KRP/KRZP/KRPZS reklamace a notifikace ---
-public sealed class KzrDotaz
-{
-    public string? Ucel { get; set; }
-    public DateTime? Datum { get; set; }
-}
-
-public sealed class ReklamaceBody
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public UdajReklamaceBulk? ZadostData { get; set; }
-}
-
-public sealed class UdajReklamaceBulk
-{
-    public long Krpzsid { get; set; }
-    public string? UlozkaId { get; set; }
-    public int? UlozkaRef { get; set; }
-    public DateTime DatumReklamace { get; set; }
-    public Reklamujici? Reklamujici { get; set; }
-    public List<UdajReklamace>? PolozkyReklamace { get; set; }
-    public string? Zduvodneni { get; set; }
-    public string? PopisReklamace { get; set; }
-}
-
-public sealed class UdajReklamace
-{
-    public string? Klic { get; set; }
-    public string? PuvodniHodnota { get; set; }
-    public string? PozadovanaHodnota { get; set; }
-}
-
-public sealed class Reklamujici
-{
-    public string? Ico { get; set; }
-    public string? Nazev { get; set; }
-    public string? KontaktEmail { get; set; }
-}
-
-// --- Notifikace ---
-public sealed class CreateNotification
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public NotificationRequest? ZadostData { get; set; }
-}
-
-public sealed class NotificationRequest
-{
-    public string? System { get; set; }
-    public string? Typ { get; set; }
-    public string? Kriteria { get; set; }
-    public string? Kanal { get; set; }
-}
-
-public sealed class Notification
-{
-    public Guid Id { get; set; }
-    public string System { get; set; } = "";
-    public string Typ { get; set; } = "";
-    public string? Kriteria { get; set; }
-    public string Kanal { get; set; } = "internal";
-    public DateTime Vytvoreno { get; set; }
-    public string Stav { get; set; } = "aktivni";
-}
-
-// --- Číselníky / referenční entity ---
-public sealed class ProviderDto
-{
-    public string Ico { get; set; } = "";
-    public string Nazev { get; set; } = "";
-}
-
-public sealed class WorkerDto
-{
-    public long KrzpId { get; set; }
-    public string Jmeno { get; set; } = "";
-    public string Prijmeni { get; set; } = "";
-    public DateOnly DatumNarozeni { get; set; }
-    public string ZamestnavatelIco { get; set; } = "";
-}
-
-// --- Patient Summary ---
-public sealed class PatientSummary
-{
-    public PatientSummaryHeader Header { get; set; } = new();
-    public PatientSummaryBody Body { get; set; } = new();
-}
-
-public sealed class PatientSummaryHeader
-{
-    public string Rid { get; set; } = "";
-    public string GivenName { get; set; } = "";
-    public string FamilyName { get; set; } = "";
-    public DateOnly DateOfBirth { get; set; }
-    /// <summary>M/Z/X</summary>
-    public string Gender { get; set; } = "X";
-}
-
-public sealed class PatientSummaryBody
-{
-    public List<Allergy>? Allergies { get; set; }
-    public List<Problem>? Problems { get; set; }
-    public List<Medication>? Medications { get; set; }
-    public List<Vaccination>? Vaccinations { get; set; }
-    public List<Implant>? Implants { get; set; }
-}
-
-public sealed class Allergy
-{
-    public string Text { get; set; } = "";
-    public string? CodeSystem { get; set; }
-    public string? Code { get; set; }
-    public string? Criticality { get; set; }
-}
-
-public sealed class Problem
-{
-    public string Text { get; set; } = "";
-    public string? CodeSystem { get; set; }
-    public string? Code { get; set; }
-}
-
-public sealed class Medication
-{
-    public string Text { get; set; } = "";
-    public string? Dosage { get; set; }
-    public string? Route { get; set; }
-}
-
-public sealed class Vaccination
-{
-    public string Text { get; set; } = "";
-    public DateOnly? Date { get; set; }
-}
-
-public sealed class Implant
-{
-    public string Text { get; set; } = "";
-}
-
-// --- HDR (propouštěcí zpráva) ---
-public sealed class DischargeReport
-{
-    public DischargeHeader Header { get; set; } = new();
-    public string? ReasonForAdmission { get; set; }
-    public List<string>? Diagnoses { get; set; }
-    public List<string>? Procedures { get; set; }
-    public string? Course { get; set; }
-    public List<MedEntry>? DischargeMedications { get; set; }
-    public string? Recommendations { get; set; }
-    public string? FollowUp { get; set; }
-}
-
-public sealed class DischargeHeader
-{
-    public string Rid { get; set; } = "";
-    public DateTime Discharge { get; set; }
-    public string AttendingDoctor { get; set; } = "";
-    public string FacilityName { get; set; } = "";
-}
-
-public sealed class MedEntry
-{
-    public string Name { get; set; } = "";
-    public string? Dosage { get; set; }
-    public string? Instructions { get; set; }
-}
-
-// --- LAB report/order ---
-public sealed class LabReport
-{
-    public LabHeader Header { get; set; } = new();
-    public List<LabResult>? Results { get; set; }
-}
-
-public sealed class LabHeader
-{
-    public string Rid { get; set; } = "";
-    public DateTime Issued { get; set; }
-    public string Laboratory { get; set; } = "";
-    public string? OrderId { get; set; }
-}
-
-public sealed class LabResult
-{
-    public string? Code { get; set; }
-    public string Text { get; set; } = "";
-    public string? Value { get; set; }
-    public string? Unit { get; set; }
-    public string? ReferenceRange { get; set; }
-    public string? AbnormalFlag { get; set; }
-}
-
-public sealed class CreateLabReport
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public LabReport? ZadostData { get; set; }
-}
-
-public sealed class LabOrder
-{
-    public Guid Id { get; set; }
-    public string Rid { get; set; } = "";
-    public DateTime Created { get; set; }
-    public List<string> Tests { get; set; } = new();
-    public string RequesterIco { get; set; } = "";
-    public string RequesterName { get; set; } = "";
-    public string? Status { get; set; }
-}
-
-public sealed class CreateLabOrder
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public LabOrder? ZadostData { get; set; }
-}
-
-// --- MI report/order ---
-public sealed class ImagingReport
-{
-    public ImagingHeader Header { get; set; } = new();
-    public string? Indication { get; set; }
-    public string Findings { get; set; } = "";
-    public string Conclusion { get; set; } = "";
-}
-
-public sealed class ImagingHeader
-{
-    public string Rid { get; set; } = "";
-    public DateTime Performed { get; set; }
-    public string Modality { get; set; } = "";
-    public string Performer { get; set; } = "";
-    public string FacilityName { get; set; } = "";
-}
-
-public sealed class CreateImagingReport
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public ImagingReport? ZadostData { get; set; }
-}
-
-public sealed class ImagingOrder
-{
-    public Guid Id { get; set; }
-    public string Rid { get; set; } = "";
-    public DateTime Created { get; set; }
-    public string RequestedModality { get; set; } = "";
-    public string? RequestedProcedure { get; set; }
-    public string? ClinicalInfo { get; set; }
-    public string RequesterIco { get; set; } = "";
-    public string RequesterName { get; set; } = "";
-    public string? Status { get; set; }
-}
-
-public sealed class CreateImagingOrder
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public ImagingOrder? ZadostData { get; set; }
-}
-
-// --- EMS ---
-public sealed class EmsRun
-{
-    public Guid Id { get; set; }
-    public string Rid { get; set; } = "";
-    public DateTime Started { get; set; }
-    public string Reason { get; set; } = "";
-    public Vitals? Vitals { get; set; }
-    public List<string>? Interventions { get; set; }
-    public string? Outcome { get; set; }
-    public string? Destination { get; set; }
-}
-
-public sealed class Vitals
-{
-    public int? Systolic { get; set; }
-    public int? Diastolic { get; set; }
-    public int? HeartRate { get; set; }
-    public int? Spo2 { get; set; }
-    public decimal? Temperature { get; set; }
-}
-
-public sealed class CreateEmsRecord
-{
-    public KzrDotaz? ZadostInfo { get; set; }
-    public EmsRun? ZadostData { get; set; }
-}
-
-// --- RID servis + evidence RID ---
-public sealed class RidRecord
-{
-    public string Rid { get; set; } = "";
-    public string GivenName { get; set; } = "";
-    public string FamilyName { get; set; } = "";
-    public DateOnly DateOfBirth { get; set; }
-    public DateTime Created { get; set; }
-}
-
-public static class RidService
-{
-    // Jednoduchý generátor 10místného RID: dělitelné 13, ne 11, nezačíná nulou a není duplicitní.
-    public static string Generate(IEnumerable<RidRecord> existing)
-    {
-        var used = new HashSet<string>(existing.Select(r => r.Rid));
-        var rnd = Random.Shared;
-
-        while (true)
-        {
-            long baseNum = 1_000_000_000L + rnd.NextInt64(0, 9_000_000_000L); // 10 číslic, nezačíná 0
-            // posuň na nejbližší násobek 13
-            var rem13 = baseNum % 13;
-            if (rem13 != 0) baseNum += (13 - rem13);
-            if (baseNum % 11 == 0) { baseNum += 13; } // vyhnout se dělitelnosti 11
-            var rid = baseNum.ToString(CultureInfo.InvariantCulture);
-            if (rid.Length == 10 && !used.Contains(rid)) return rid;
-        }
-    }
-}
-
-// --- Jednoduchá "DB" perzistence do ./data/*.json ---
-public static class Db
-{
-    private static readonly string DataDir = Path.Combine(AppContext.BaseDirectory, "data");
-    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
-
-    public static List<ProviderDto> Providers { get; } =
-        LoadList<ProviderDto>("providers.json", () => new()
-        {
-            new ProviderDto { Ico = "12345678", Nazev = "Nemocnice Alfa a.s." },
-            new ProviderDto { Ico = "87654321", Nazev = "Poliklinika Beta s.r.o." }
-        });
-
-    public static List<WorkerDto> Workers { get; } =
-        LoadList<WorkerDto>("workers.json", () => new()
-        {
-            new WorkerDto { KrzpId = 1001, Jmeno = "Jan",  Prijmeni = "Novák",  DatumNarozeni = new DateOnly(1980,5,1), ZamestnavatelIco = "12345678" },
-            new WorkerDto { KrzpId = 1002, Jmeno = "Eva",  Prijmeni = "Svobodová", DatumNarozeni = new DateOnly(1985,7,10), ZamestnavatelIco = "87654321" },
-            new WorkerDto { KrzpId = 1003, Jmeno = "Petr", Prijmeni = "Dvořák", DatumNarozeni = new DateOnly(1990,1,15), ZamestnavatelIco = "12345678" }
-        });
-
-    public static List<RidRecord> Rids { get; } =
-        LoadList<RidRecord>("rids.json", () => new()
-        {
-            new RidRecord
-            {
-                Rid = "1000000014", // dělitelné 13, ne 11
-                GivenName = "Karel", FamilyName = "Test", DateOfBirth = new DateOnly(1975, 3, 14), Created = DateTime.UtcNow
-            }
-        });
-
-    public static List<PatientSummary> PatientSummaries { get; } =
-        LoadList<PatientSummary>("ps.json", () => {
-            var rid = Rids[0].Rid;
-            return new()
-            {
-                new PatientSummary
-                {
-                    Header = new PatientSummaryHeader
-                    {
-                        Rid = rid, GivenName = "Karel", FamilyName = "Test",
-                        DateOfBirth = new DateOnly(1975,3,14), Gender = "M"
-                    },
-                    Body = new PatientSummaryBody
-                    {
-                        Allergies = new() { new Allergy { Text = "Penicilin", CodeSystem = "SNOMED", Code = "294513009", Criticality = "low" } },
-                        Problems  = new() { new Problem  { Text = "Hypertenze", CodeSystem = "ICD-10", Code = "I10" } },
-                        Medications = new() { new Medication { Text = "Atorvastatin 20 mg", Dosage = "1-0-0", Route = "per os" } },
-                        Vaccinations = new() { new Vaccination { Text = "COVID-19", Date = new DateOnly(2023,10,1) } },
-                        Implants = new() { new Implant { Text = "Stent koronární" } }
-                    }
-                }
-            };
-        });
-
-    public static List<DischargeReport> DischargeReports { get; } =
-        LoadList<DischargeReport> ("hdr.json", () => {
-            var rid = PatientSummaries[0].Header.Rid;
-            return new()
-            {
-                new DischargeReport
-                {
-                    Header = new DischargeHeader
-                    {
-                        Rid = rid, Discharge = DateTime.UtcNow.AddDays(-7),
-                        AttendingDoctor = "MUDr. Alfa", FacilityName = "Nemocnice Alfa a.s."
-                    },
-                    ReasonForAdmission = "Bolesti na hrudi",
-                    Diagnoses = new() { "I21.9 Akutní infarkt myokardu", "I10 Hypertenze" },
-                    Procedures = new() { "Koronarografie", "PCI" },
-                    Course = "Nezkomplikovaný průběh",
-                    DischargeMedications = new() { new MedEntry { Name = "ASA", Dosage = "100 mg 1-0-0" } },
-                    Recommendations = "Kontrola Kardiologie 6 týdnů",
-                    FollowUp = "PL do 3 dnů"
-                }
-            };
-        });
-
-    public static List<LabReport> LabReports { get; } =
-        LoadList<LabReport>("lab_reports.json", () => {
-            var rid = PatientSummaries[0].Header.Rid;
-            return new()
-            {
-                new LabReport
-                {
-                    Header = new LabHeader { Rid = rid, Issued = DateTime.UtcNow.AddDays(-2), Laboratory = "Lab Alfa", OrderId = Guid.NewGuid().ToString() },
-                    Results = new() { new LabResult { Code = "718-7", Text = "Hemoglobin", Value = "140", Unit = "g/L", ReferenceRange = "135-175", AbnormalFlag = "N" } }
-                }
-            };
-        });
-
-    public static List<ImagingReport> ImagingReports { get; } =
-        LoadList<ImagingReport>("mi_reports.json", () => {
-            var rid = PatientSummaries[0].Header.Rid;
-            return new()
-            {
-                new ImagingReport
-                {
-                    Header = new ImagingHeader { Rid = rid, Performed = DateTime.UtcNow.AddDays(-10), Modality = "US", Performer = "MUDr. Beta", FacilityName = "Poliklinika Beta s.r.o." },
-                    Indication = "Kontrolní vyšetření",
-                    Findings = "Bez patrné patologie.",
-                    Conclusion = "Nález v normě."
-                }
-            };
-        });
-
-    public static List<LabOrder> LabOrders { get; } =
-        LoadList<LabOrder>("lab_orders.json", () => {
-            var rid = PatientSummaries[0].Header.Rid;
-            return new()
-            {
-                new LabOrder { Id = Guid.NewGuid(), Rid = rid, Created = DateTime.UtcNow.AddDays(-3), Tests = new(){ "Glukóza", "Hb" }, RequesterIco = Providers[0].Ico, RequesterName = Providers[0].Nazev, Status = "received" }
-            };
-        });
-
-    public static List<ImagingOrder> ImagingOrders { get; } =
-        LoadList<ImagingOrder>("mi_orders.json", () => {
-            var rid = PatientSummaries[0].Header.Rid;
-            return new()
-            {
-                new ImagingOrder { Id = Guid.NewGuid(), Rid = rid, Created = DateTime.UtcNow.AddDays(-4), RequestedModality = "CT", RequestedProcedure = "CT hrudníku", ClinicalInfo = "Kontrola", RequesterIco = Providers[0].Ico, RequesterName = Providers[0].Nazev, Status = "received" }
-            };
-        });
-
-    public static List<EmsRun> EmsRuns { get; } =
-        LoadList<EmsRun>("ems_runs.json", () => {
-            var rid = PatientSummaries[0].Header.Rid;
-            return new()
-            {
-                new EmsRun { Id = Guid.NewGuid(), Rid = rid, Started = DateTime.UtcNow.AddDays(-15), Reason = "Bolest na hrudi", Vitals = new Vitals{ Systolic=150, Diastolic=90, HeartRate=100, Spo2=95, Temperature=36.8m }, Interventions = new(){ "ASA 500 mg", "Monitoring" }, Outcome = "Převoz", Destination = Providers[0].Nazev }
-            };
-        });
-
-    // --- Save helpers ---
-    public static void SaveRids(IEnumerable<RidRecord> items) => SaveList("rids.json", items);
-    public static void SaveLabReports(IEnumerable<LabReport> items) => SaveList("lab_reports.json", items);
-    public static void SaveImagingReports(IEnumerable<ImagingReport> items) => SaveList("mi_reports.json", items);
-    public static void SaveLabOrders(IEnumerable<LabOrder> items) => SaveList("lab_orders.json", items);
-    public static void SaveImagingOrders(IEnumerable<ImagingOrder> items) => SaveList("mi_orders.json", items);
-    public static void SaveEmsRuns(IEnumerable<EmsRun> items) => SaveList("ems_runs.json", items);
-    public static void SaveNotifications(IEnumerable<Notification> items) => SaveList("notifications.json", items);
-
-    // --- I/O ---
-    private static List<T> LoadList<T>(string fileName, Func<List<T>> seed)
-    {
-        try
-        {
-            Directory.CreateDirectory(DataDir);
-            var path = Path.Combine(DataDir, fileName);
-            if (File.Exists(path))
-            {
-                var json = File.ReadAllText(path);
-                var list = JsonSerializer.Deserialize<List<T>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return list ?? seed();
-            }
-            var seeded = seed();
-            File.WriteAllText(path, JsonSerializer.Serialize(seeded, JsonOpts));
-            return seeded;
-        }
-        catch
-        {
-            return seed();
-        }
-    }
-
-    private static void SaveList<T>(string fileName, IEnumerable<T> items)
-    {
-        Directory.CreateDirectory(DataDir);
-        var path = Path.Combine(DataDir, fileName);
-        File.WriteAllText(path, JsonSerializer.Serialize(items, JsonOpts));
     }
 }

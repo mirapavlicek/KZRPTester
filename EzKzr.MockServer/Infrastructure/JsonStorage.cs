@@ -1,47 +1,34 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace EzKzr.MockServer.Infrastructure;
 
-public sealed class JsonStorage
+using System.Text.Json;
+
+internal static class JsonStorage
 {
-    private readonly string _root;
-    private readonly JsonSerializerOptions _opt;
-    private readonly object _lock = new();
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
-    public JsonStorage(string contentRoot)
+    internal static List<T> LoadList<T>(string dir, string fileName, Func<List<T>> seed)
     {
-        _root = Path.Combine(contentRoot, "data");
-        Directory.CreateDirectory(_root);
-        _opt = new JsonSerializerOptions
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, fileName);
+        if (File.Exists(path))
         {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter() }
-        };
+            try
+            {
+                var json = File.ReadAllText(path);
+                var res = JsonSerializer.Deserialize<List<T>>(json, JsonOpts);
+                if (res is not null) return res;
+            }
+            catch { }
+        }
+        var seeded = seed();
+        File.WriteAllText(path, JsonSerializer.Serialize(seeded, JsonOpts));
+        return seeded;
     }
 
-    public List<T> LoadList<T>(string name, Func<List<T>> seed)
+    internal static void SaveList<T>(string dir, string fileName, IEnumerable<T> list)
     {
-        var path = Path.Combine(_root, $"{name}.json");
-        if (!File.Exists(path))
-        {
-            var d = seed();
-            SaveList(name, d);
-            return d;
-        }
-        using var fs = File.OpenRead(path);
-        return JsonSerializer.Deserialize<List<T>>(fs, _opt) ?? new();
-    }
-
-    public void SaveList<T>(string name, IEnumerable<T> data)
-    {
-        var path = Path.Combine(_root, $"{name}.json");
-        lock (_lock)
-        {
-            using var fs = File.Create(path);
-            JsonSerializer.Serialize(fs, data, _opt);
-        }
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, fileName);
+        File.WriteAllText(path, JsonSerializer.Serialize(list, JsonOpts));
     }
 }

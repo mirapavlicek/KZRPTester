@@ -10,5 +10,17 @@
     "Indication": "Kontroln\u00ED vy\u0161et\u0159en\u00ED",
     "Findings": "Bez patrn\u00E9 patologie.",
     "Conclusion": "N\u00E1lez v norm\u011B."
+  },
+  {
+    "Header": {
+      "Rid": "string",
+      "Performed": "2025-08-20T16:52:01.859Z",
+      "Modality": "string",
+      "Performer": "string",
+      "FacilityName": "string"
+    },
+    "Indication": "string",
+    "Findings": "string",
+    "Conclusion": "string"
   }
 ]
