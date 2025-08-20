@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "Fl0tgRoMYgWz6mrIdOVEQpW158boc0UlDTAeOT0JLE8=",
+  "Source": "EzKzr.MockServer",
+  "BasePath": "_content/EzKzr.MockServer",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
