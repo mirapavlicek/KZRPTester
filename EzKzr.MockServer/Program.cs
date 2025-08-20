@@ -44,45 +44,132 @@ public static class Program
         new WorkerDto { KrzpId = 100002, Jmeno = "Petr", Prijmeni = "Svoboda", DatumNarozeni = new DateOnly(1979, 9, 3), ZamestnavatelIco = "87654321", Odbornost = "913" }
     ];
 
+    private const string FhirJson = "application/fhir+json";
+
     private static readonly ConcurrentDictionary<Guid, Notification> Notifications = new();
+
+    // --- Patient Summary seed ---
     private static readonly List<PatientSummary> PatientSummaries =
-[
-    new PatientSummary
-    {
-        Header = new PatientHeader
+    [
+        new PatientSummary
         {
-            Rid = "1234567891",
-            GivenName = "Jan",
-            FamilyName = "Novák",
-            DateOfBirth = new DateOnly(1980, 1, 15),
-            Gender = "M"
+            Header = new PatientHeader
+            {
+                Rid = "1234567891",
+                GivenName = "Jan",
+                FamilyName = "Novák",
+                DateOfBirth = new DateOnly(1980, 1, 15),
+                Gender = "M"
+            },
+            Body = new PatientSummaryBody
+            {
+                Allergies =
+                [
+                    new Allergy { Text = "Alergie na penicilin", CodeSystem = "SNOMED", Code = "91936005", Criticality = "high" }
+                ],
+                Vaccinations =
+                [
+                    new Vaccination { Text = "Tetanus", Date = new DateOnly(2020, 5, 20) }
+                ],
+                Problems =
+                [
+                    new Problem { Text = "Diabetes mellitus 2. typu", CodeSystem = "ICD-10", Code = "E11" }
+                ],
+                Medications =
+                [
+                    new Medication { Text = "Metformin 500 mg", Dosage = "1-0-1", Route = "per os" }
+                ],
+                Implants =
+                [
+                    new Implant { Text = "Koronární stent", Date = new DateOnly(2019, 9, 1) }
+                ],
+                AdvanceDirectives = "DNAR"
+            }
         },
-        Body = new PatientSummaryBody
-        {
-            Allergies =
-            [
-                new Allergy { Text = "Alergie na penicilin", CodeSystem = "SNOMED", Code = "91936005", Criticality = "high" }
-            ],
-            Vaccinations =
-            [
-                new Vaccination { Text = "Tetanus", Date = new DateOnly(2020, 5, 20) }
-            ],
-            Problems =
-            [
-                new Problem { Text = "Diabetes mellitus 2. typu", CodeSystem = "ICD-10", Code = "E11" }
-            ],
-            Medications =
-            [
-                new Medication { Text = "Metformin 500 mg", Dosage = "1-0-1", Route = "per os" }
-            ],
-            Implants =
-            [
-                new Implant { Text = "Koronární stent", Date = new DateOnly(2019, 9, 1) }
-            ],
-            AdvanceDirectives = "DNAR"
-        }
+new PatientSummary
+{
+    Header = new PatientHeader
+    {
+        Rid = "2345678902",
+        GivenName = "Eva",
+        FamilyName = "Malá",
+        DateOfBirth = new DateOnly(1992, 3, 22),
+        Gender = "Z"
+    },
+    Body = new PatientSummaryBody
+    {
+        Allergies = [],
+        Vaccinations = [ new Vaccination { Text = "Covid‑19", Date = new DateOnly(2023, 11, 1) } ],
+        Problems = [ new Problem { Text = "Hypertenze", CodeSystem = "ICD-10", Code = "I10" } ],
+        Medications = [ new Medication { Text = "Perindopril 5 mg", Dosage = "1-0-0" } ],
+        Implants = [],
+        AdvanceDirectives = null
     }
-];
+}
+    ];
+
+    // --- Hospital Discharge Report (HDR) seed (eHN/CZ) ---
+    private static readonly List<DischargeReport> DischargeReports =
+    [
+        new DischargeReport
+        {
+            Header = new DischargeHeader
+            {
+                Rid = "1234567891",
+                FacilityIco = "12345678",
+                FacilityName = "Nemocnice Alfa, a.s.",
+                Department = "Kardiologie",
+                AttendingDoctor = "MUDr. Jana Nováková",
+                Admission = new DateTime(2024, 10, 9, 10, 48, 0, DateTimeKind.Utc),
+                Discharge = new DateTime(2024, 10, 17, 12, 0, 0, DateTimeKind.Utc),
+                DischargeDestination = "Domů"
+            },
+            ReasonForAdmission = "Bolest na hrudi a dušnost.",
+            Diagnoses = new List<string>
+            {
+                "I21.0 Akutní infarkt myokardu přední stěny",
+                "E11 Diabetes mellitus 2. typu"
+            },
+            Procedures = new List<string>
+            {
+                "Koronární angiografie",
+                "Perkutánní koronární intervence se zavedením stentu"
+            },
+            Course = "Po přijetí zahájena antitrombotická léčba. Provedena PCI s implantací stentu. Průběh bez komplikací.",
+            DischargeMedications = new List<MedicationOnDischarge>
+            {
+                new MedicationOnDischarge { Name = "Acetylsalicylová kyselina 100 mg", Dosage = "1-0-0", Instructions = "ráno" },
+                new MedicationOnDischarge { Name = "Atorvastatin 20 mg", Dosage = "0-0-1", Instructions = "večer" },
+                new MedicationOnDischarge { Name = "Metformin 500 mg", Dosage = "1-0-1", Instructions = "s jídlem" }
+            },
+            FollowUp = "Kontrola na kardiologii za 6 týdnů.",
+            Recommendations = "Nekuřit. Dietní a režimová opatření."
+        },
+new DischargeReport
+{
+    Header = new DischargeHeader
+    {
+        Rid = "2345678902",
+        FacilityIco = "87654321",
+        FacilityName = "Poliklinika Beta, s.r.o.",
+        Department = "Interna",
+        AttendingDoctor = "MUDr. Petr Svoboda",
+        Admission = new DateTime(2024, 6, 3, 9, 0, 0, DateTimeKind.Utc),
+        Discharge = new DateTime(2024, 6, 7, 14, 30, 0, DateTimeKind.Utc),
+        DischargeDestination = "Domů"
+    },
+    ReasonForAdmission = "Synkopa.",
+    Diagnoses = new List<string> { "I10 Esenciální hypertenze" },
+    Procedures = new List<string> { "Monitorace TK, EKG" },
+    Course = "Stabilizace, úprava medikace.",
+    DischargeMedications = new List<MedicationOnDischarge>
+    {
+        new MedicationOnDischarge { Name = "Perindopril 5 mg", Dosage = "1-0-0", Instructions = "ráno" }
+    },
+    FollowUp = "Praktický lékař za 2 týdny.",
+    Recommendations = "Dostatečný pitný režim."
+}
+    ];
 
     public static void Main(string[] args)
     {
@@ -207,6 +294,107 @@ public static class Program
         // Notifikace KRPZS
         MapNotificationEndpoints(krpzs);
 
+        // ----- SAMPLES (ukázková data a volání) -----
+var samples = api.MapGroup("/samples");
+
+samples.MapGet("/", () =>
+{
+    var exZadostId = "11111111-1111-1111-1111-111111111111";
+    var exDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+    return Results.Ok(new
+    {
+        note = "Ukázková data a příklady volání.",
+        providers = Providers.Select(p => new { p.Ico, p.Nazev }).ToArray(),
+        workers = Workers.Select(w => new { w.KrzpId, w.Jmeno, w.Prijmeni, narozeni = w.DatumNarozeni }).ToArray(),
+        patientRids = PatientSummaries.Select(p => new { p.Header.Rid, p.Header.GivenName, p.Header.FamilyName }).ToArray(),
+        examples = new
+        {
+            ciselnik_stat = $"/api/v1/ciselnik/{exZadostId}/stat?ucel=Test&datum={exDate}",
+            ciselnik_pohlavi = $"/api/v1/ciselnik/{exZadostId}/pohlavi?ucel=Test&datum={exDate}",
+            ciselnik_pojistovna = $"/api/v1/ciselnik/{exZadostId}/zdravotni_pojistovna?ucel=Test&datum={exDate}",
+
+            krpzs_get_ico = $"/api/v1/krpzs/hledat/{exZadostId}/ico?ico={Providers[0].Ico}&ucel=Test&datum={exDate}",
+
+            krzp_get_id = $"/api/v1/krzp/hledat/{exZadostId}/krzpid?id={Workers[0].KrzpId}&ucel=Test&datum={exDate}",
+            krzp_get_osoba =
+                $"/api/v1/krzp/hledat/{exZadostId}/jmeno_prijmeni_datum_narozeni?jmeno={Uri.EscapeDataString(Workers[0].Jmeno)}&prijmeni={Uri.EscapeDataString(Workers[0].Prijmeni)}&datumNarozeni={Workers[0].DatumNarozeni:yyyy-MM-dd}&ucel=Test&datum={exDate}",
+            krzp_get_zamestnavatel =
+                $"/api/v1/krzp/hledat/{exZadostId}/zamestnavatel?ico={Workers[0].ZamestnavatelIco}&ucel=Test&datum={exDate}",
+
+            ps_by_rid = $"/api/v1/ps/rid/{exZadostId}?rid={PatientSummaries[0].Header.Rid}&ucel=Test&datum={exDate}",
+            ps_by_osoba =
+                $"/api/v1/ps/osoba/{exZadostId}?jmeno={Uri.EscapeDataString(PatientSummaries[0].Header.GivenName)}&prijmeni={Uri.EscapeDataString(PatientSummaries[0].Header.FamilyName)}&datumNarozeni={PatientSummaries[0].Header.DateOfBirth:yyyy-MM-dd}&ucel=Test&datum={exDate}",
+
+            hdr_by_rid = $"/api/v1/hdr/rid/{exZadostId}?rid={DischargeReports[0].Header.Rid}&ucel=Test&datum={exDate}",
+
+            fhir_metadata = "/fhir/metadata",
+            fhir_patient = $"/fhir/Patient/{PatientSummaries[0].Header.Rid}",
+            fhir_summary = $"/fhir/Patient/{PatientSummaries[0].Header.Rid}/$summary",
+            fhir_document = $"/fhir/Bundle/{DischargeReports[0].Header.Rid}/$discharge"
+        }
+    });
+})
+.Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+samples.MapGet("/providers", () => Results.Ok(Providers))
+    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+samples.MapGet("/workers", () => Results.Ok(Workers))
+    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+samples.MapGet("/ps", () => Results.Ok(PatientSummaries))
+    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+samples.MapGet("/hdr", () => Results.Ok(DischargeReports))
+    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+// ukázkové request body pro POSTy
+samples.MapGet("/body/reklamace", () =>
+{
+    var body = new ReklamaceBody
+    {
+        ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+        ZadostData = new UdajReklamaceBulk
+        {
+            Krpzsid = 123456789,
+            UlozkaId = "ORG001",
+            UlozkaRef = 42,
+            DatumReklamace = DateTime.UtcNow.Date,
+            Reklamujici = new Reklamujici
+            {
+                Ico = Providers[0].Ico,
+                Nazev = Providers[0].Nazev,
+                KontaktEmail = "it@example.org"
+            },
+            PolozkyReklamace = new List<UdajReklamace>
+            {
+                new UdajReklamace { Klic = "Nazev", PuvodniHodnota = "Nemocnice Alfa, a.s.", PozadovanaHodnota = "Nemocnice ALFA a.s." }
+            },
+            Zduvodneni = "Oprava údajů v registru",
+            PopisReklamace = "Formální úprava názvu"
+        }
+    };
+    return Results.Ok(body);
+})
+.Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+samples.MapGet("/body/notifikace", () =>
+{
+    var req = new CreateNotification
+    {
+        ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+        ZadostData = new NotificationRequest
+        {
+            System = "KRPZS",
+            Typ = "zmena-pzs",
+            Kriteria = $"ico={Providers[0].Ico}",
+            Kanal = "webhook"
+        }
+    };
+    return Results.Ok(req);
+})
+.Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
         // ----- Patient Summary (EU PS/IPS mock) -----
         var ps = api.MapGroup("/ps");
 
@@ -242,6 +430,49 @@ public static class Program
             if (psu is null) return NotFound("Pacient nenalezen.", zadostId);
 
             return Ok(psu, zadostId, "OK", popis: "PatientSummary");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // ----- HDR (Propouštěcí zpráva) -----
+        var hdr = api.MapGroup("/hdr");
+
+        // GET /api/v1/hdr/rid/{zadostId}?rid=...
+        hdr.MapGet("/rid/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(rid)) errs.Add("rid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var rep = FindHdr(rid);
+            if (rep is null) return NotFound($"Propouštěcí zpráva pro RID {rid} nenalezena.", zadostId);
+
+            return Ok(rep, zadostId, "OK", popis: "HDR");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // GET /api/v1/hdr/osoba/{zadostId}?jmeno=...&prijmeni=...&datumNarozeni=YYYY-MM-DD
+        hdr.MapGet("/osoba/{zadostId:guid}", (Guid zadostId, string jmeno, string prijmeni, DateOnly datumNarozeni, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(jmeno)) errs.Add("jmeno je povinné.");
+            if (string.IsNullOrWhiteSpace(prijmeni)) errs.Add("prijmeni je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var psu = PatientSummaries.FirstOrDefault(x =>
+                string.Equals(x.Header.GivenName, jmeno, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.Header.FamilyName, prijmeni, StringComparison.OrdinalIgnoreCase) &&
+                x.Header.DateOfBirth == datumNarozeni);
+
+            if (psu is null) return NotFound("Pacient nenalezen.", zadostId);
+
+            var rep = FindHdr(psu.Header.Rid);
+            if (rep is null) return NotFound("Propouštěcí zpráva nenalezena.", zadostId);
+
+            return Ok(rep, zadostId, "OK", popis: "HDR");
         })
         .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
         .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
@@ -305,6 +536,9 @@ public static class Program
 
         // Notifikace KRZP
         MapNotificationEndpoints(krzp);
+
+        // FHIR
+        MapFhirRoutes(app);
     }
 
     private static void MapNotificationEndpoints(RouteGroupBuilder group)
@@ -359,6 +593,370 @@ public static class Program
             return Ok(q.ToArray(), zadostId, "OK", popis: "VyhledejOdberNotifikaciPZS");
         });
     }
+
+    private static void MapFhirRoutes(WebApplication app)
+    {
+        var fhir = app.MapGroup("/fhir");
+
+        // CapabilityStatement (metadata)
+        fhir.MapGet("/metadata", () =>
+        {
+            var meta = new
+            {
+                resourceType = "CapabilityStatement",
+                status = "active",
+                date = DateTime.UtcNow.ToString("o"),
+                kind = "instance",
+                format = new[] { "json", FhirJson },
+                rest = new[]
+                {
+                    new {
+                        mode = "server",
+                        resource = new object[]
+                        {
+                            new { type = "Patient",               interaction = new[] { new { code = "read" }, new { code = "search-type" } } },
+                            new { type = "AllergyIntolerance",    interaction = new[] { new { code = "search-type" } } },
+                            new { type = "Condition",             interaction = new[] { new { code = "search-type" } } },
+                            new { type = "MedicationStatement",   interaction = new[] { new { code = "search-type" } } },
+                            new { type = "Immunization",          interaction = new[] { new { code = "search-type" } } },
+                            new { type = "Device",                interaction = new[] { new { code = "search-type" } } },
+                            new { type = "Composition",           interaction = new[] { new { code = "search-type" } } },
+                            new { type = "DocumentReference",     interaction = new[] { new { code = "search-type" } } }
+                        }
+                    }
+                }
+            };
+            return Fhir(meta);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson);
+
+        // Patient by RID
+        fhir.MapGet("/Patient/{rid}", (string rid) =>
+        {
+            var ps = PatientSummaries.FirstOrDefault(x => x.Header.Rid == rid);
+            if (ps is null) return FhirNotFound($"Patient {rid} not found.");
+            return Fhir(FhirPatient(ps));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        // Search endpoints (Bundle type=searchset)
+        fhir.MapGet("/AllergyIntolerance", (string patient) =>
+        {
+            var ps = FindPs(patient);
+            if (ps is null) return FhirNotFound($"Patient {patient} not found.");
+            var list = (ps.Body.Allergies ?? new()).Select((a, i) => FhirAllergy(a, ps.Header.Rid, i + 1)).ToList();
+            return Fhir(ToSearchBundle(list));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        fhir.MapGet("/Condition", (string patient) =>
+        {
+            var ps = FindPs(patient);
+            if (ps is null) return FhirNotFound($"Patient {patient} not found.");
+            var list = (ps.Body.Problems ?? new()).Select((p, i) => FhirCondition(p, ps.Header.Rid, i + 1)).ToList();
+            return Fhir(ToSearchBundle(list));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        fhir.MapGet("/MedicationStatement", (string patient) =>
+        {
+            var ps = FindPs(patient);
+            if (ps is null) return FhirNotFound($"Patient {patient} not found.");
+            var list = (ps.Body.Medications ?? new()).Select((m, i) => FhirMedicationStatement(m, ps.Header.Rid, i + 1)).ToList();
+            return Fhir(ToSearchBundle(list));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        fhir.MapGet("/Immunization", (string patient) =>
+        {
+            var ps = FindPs(patient);
+            if (ps is null) return FhirNotFound($"Patient {patient} not found.");
+            var list = (ps.Body.Vaccinations ?? new()).Select((v, i) => FhirImmunization(v, ps.Header.Rid, i + 1)).ToList();
+            return Fhir(ToSearchBundle(list));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        fhir.MapGet("/Device", (string patient) =>
+        {
+            var ps = FindPs(patient);
+            if (ps is null) return FhirNotFound($"Patient {patient} not found.");
+            var list = (ps.Body.Implants ?? new()).Select((d, i) => FhirDevice(d, ps.Header.Rid, i + 1)).ToList();
+            return Fhir(ToSearchBundle(list));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        // Patient $summary => Bundle type=collection
+        fhir.MapGet("/Patient/{rid}/$summary", (string rid) =>
+        {
+            var ps = PatientSummaries.FirstOrDefault(x => x.Header.Rid == rid);
+            if (ps is null) return FhirNotFound($"Patient {rid} not found.");
+
+            var resources = new List<object> { FhirPatient(ps) };
+            resources.AddRange((ps.Body.Allergies ?? new()).Select((a, i) => FhirAllergy(a, rid, i + 1)));
+            resources.AddRange((ps.Body.Problems ?? new()).Select((p, i) => FhirCondition(p, rid, i + 1)));
+            resources.AddRange((ps.Body.Medications ?? new()).Select((m, i) => FhirMedicationStatement(m, rid, i + 1)));
+            resources.AddRange((ps.Body.Vaccinations ?? new()).Select((v, i) => FhirImmunization(v, rid, i + 1)));
+            resources.AddRange((ps.Body.Implants ?? new()).Select((d, i) => FhirDevice(d, rid, i + 1)));
+
+            return Fhir(ToCollectionBundle(resources));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        // --- FHIR search: Composition (HDR) ---
+        fhir.MapGet("/Composition", (string patient, string? type) =>
+        {
+            var dr = FindHdr(patient);
+            if (dr is null) return FhirNotFound($"No HDR for patient {patient}.");
+            var comp = FhirDischargeComposition(dr);
+            return Fhir(ToSearchBundle(new[] { comp }));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        // --- FHIR search: DocumentReference (points to a document Bundle) ---
+        fhir.MapGet("/DocumentReference", (string patient, string? type) =>
+        {
+            var dr = FindHdr(patient);
+            if (dr is null) return FhirNotFound($"No HDR for patient {patient}.");
+            var doc = new
+            {
+                resourceType = "DocumentReference",
+                id = $"docref-hdr-{patient}",
+                status = "current",
+                type = new { coding = new[] { new { system = "http://loinc.org", code = "18842-5", display = "Discharge summary" } }, text = "Propouštěcí zpráva" },
+                subject = new { reference = $"Patient/{patient}" },
+                date = dr.Header.Discharge.ToString("o"),
+                content = new[]
+                {
+                    new
+                    {
+                        attachment = new
+                        {
+                            contentType = FhirJson,
+                            url = $"/fhir/Bundle/{patient}/$discharge"
+                        }
+                    }
+                }
+            };
+            return Fhir(ToSearchBundle(new[] { doc }));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+
+        // --- FHIR document: Bundle type=document with Composition ---
+        fhir.MapGet("/Bundle/{rid}/$discharge", (string rid) =>
+        {
+            var dr = FindHdr(rid);
+            if (dr is null) return FhirNotFound($"No HDR for patient {rid}.");
+            var composition = FhirDischargeComposition(dr);
+            var ps = PatientSummaries.FirstOrDefault(x => x.Header.Rid == rid);
+            var patientRes = ps is null ? new { resourceType = "Patient", id = rid } : FhirPatient(ps);
+            var doc = ToDocumentBundle(new[] { composition, patientRes });
+            return Fhir(doc);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+    }
+
+    private static PatientSummary? FindPs(string rid)
+        => PatientSummaries.FirstOrDefault(x => x.Header.Rid == rid);
+
+    private static DischargeReport? FindHdr(string rid)
+        => DischargeReports.FirstOrDefault(x => x.Header.Rid == rid);
+
+    // ---------- FHIR helpers ----------
+    private static IResult Fhir(object payload, int statusCode = StatusCodes.Status200OK)
+        => Results.Json(payload, contentType: FhirJson, statusCode: statusCode);
+
+    private static IResult FhirNotFound(string msg)
+        => Results.Json(new
+        {
+            resourceType = "OperationOutcome",
+            issue = new[] { new { severity = "error", code = "not-found", diagnostics = msg } }
+        }, contentType: FhirJson, statusCode: StatusCodes.Status404NotFound);
+
+    private static object ToSearchBundle(IEnumerable<object> resources)
+        => new
+        {
+            resourceType = "Bundle",
+            type = "searchset",
+            total = resources.Count(),
+            entry = resources.Select(r => new { resource = r })
+        };
+
+    private static object ToCollectionBundle(IEnumerable<object> resources)
+        => new
+        {
+            resourceType = "Bundle",
+            type = "collection",
+            total = resources.Count(),
+            entry = resources.Select(r => new { resource = r })
+        };
+
+    private static object ToDocumentBundle(IEnumerable<object> resources)
+        => new
+        {
+            resourceType = "Bundle",
+            type = "document",
+            timestamp = DateTime.UtcNow.ToString("o"),
+            entry = resources.Select(r => new { resource = r })
+        };
+
+    private static object FhirPatient(PatientSummary ps)
+        => new
+        {
+            resourceType = "Patient",
+            id = ps.Header.Rid,
+            identifier = new[]
+            {
+                new { system = "urn:oid:1.2.203.0.0.1.1", value = ps.Header.Rid }
+            },
+            name = new[]
+            {
+                new { family = ps.Header.FamilyName, given = new[] { ps.Header.GivenName } }
+            },
+            gender = ToFhirGender(ps.Header.Gender),
+            birthDate = ps.Header.DateOfBirth.ToString("yyyy-MM-dd")
+        };
+
+    private static object FhirAllergy(Allergy a, string rid, int ix)
+        => new
+        {
+            resourceType = "AllergyIntolerance",
+            id = $"alg-{ix}-{rid}",
+            clinicalStatus = new
+            {
+                coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", code = "active" } }
+            },
+            verificationStatus = new
+            {
+                coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", code = "confirmed" } }
+            },
+            code = new
+            {
+                text = a.Text,
+                coding = (a.Code is not null && a.CodeSystem is not null)
+                    ? new[] { new { system = MapCodeSystem(a.CodeSystem), code = a.Code, display = a.Text } }
+                    : null
+            },
+            patient = new { reference = $"Patient/{rid}" },
+            criticality = MapCriticality(a.Criticality)
+        };
+
+    private static object FhirCondition(Problem p, string rid, int ix)
+        => new
+        {
+            resourceType = "Condition",
+            id = $"cond-{ix}-{rid}",
+            clinicalStatus = new
+            {
+                coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/condition-clinical", code = "active" } }
+            },
+            code = new
+            {
+                text = p.Text,
+                coding = (p.Code is not null && p.CodeSystem is not null)
+                    ? new[] { new { system = MapCodeSystem(p.CodeSystem), code = p.Code, display = p.Text } }
+                    : null
+            },
+            subject = new { reference = $"Patient/{rid}" }
+        };
+
+    private static object FhirMedicationStatement(Medication m, string rid, int ix)
+        => new
+        {
+            resourceType = "MedicationStatement",
+            id = $"meds-{ix}-{rid}",
+            status = "active",
+            medicationCodeableConcept = new { text = m.Text },
+            subject = new { reference = $"Patient/{rid}" },
+            dosage = string.IsNullOrWhiteSpace(m.Dosage)
+                ? null
+                : new[]
+                {
+                    new
+                    {
+                        text = m.Dosage,
+                        route = string.IsNullOrWhiteSpace(m.Route) ? null : new { text = m.Route }
+                    }
+                }
+        };
+
+    private static object FhirImmunization(Vaccination v, string rid, int ix)
+        => new
+        {
+            resourceType = "Immunization",
+            id = $"imm-{ix}-{rid}",
+            status = "completed",
+            vaccineCode = new { text = v.Text },
+            patient = new { reference = $"Patient/{rid}" },
+            occurrenceDateTime = v.Date.HasValue ? v.Date.Value.ToString("yyyy-MM-dd") : null
+        };
+
+    private static object FhirDevice(Implant d, string rid, int ix)
+        => new
+        {
+            resourceType = "Device",
+            id = $"dev-{ix}-{rid}",
+            type = new { text = d.Text },
+            patient = new { reference = $"Patient/{rid}" }
+        };
+
+    private static object FhirDischargeComposition(DischargeReport dr)
+        => new
+        {
+            resourceType = "Composition",
+            id = $"comp-hdr-{dr.Header.Rid}",
+            status = "final",
+            type = new
+            {
+                coding = new[] { new { system = "http://loinc.org", code = "18842-5", display = "Discharge summary" } },
+                text = "Propouštěcí zpráva"
+            },
+            subject = new { reference = $"Patient/{dr.Header.Rid}" },
+            date = dr.Header.Discharge.ToString("o"),
+            title = "Propouštěcí zpráva",
+            author = new[] { new { display = dr.Header.AttendingDoctor } },
+            custodian = new { display = dr.Header.FacilityName },
+            section = new object[]
+            {
+                new { title = "Důvod přijetí", text = new { status = "generated", div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>{dr.ReasonForAdmission}</p></div>" } },
+                new { title = "Diagnózy", text = new { status = "generated", div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul>{string.Join("", (dr.Diagnoses ?? new()).Select(d => $"<li>{d}</li>"))}</ul></div>" } },
+                new { title = "Výkony", text = new { status = "generated", div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul>{string.Join("", (dr.Procedures ?? new()).Select(p => $"<li>{p}</li>"))}</ul></div>" } },
+                new { title = "Průběh hospitalizace", text = new { status = "generated", div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>{dr.Course}</p></div>" } },
+                new { title = "Medikace při propuštění", text = new { status = "generated", div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\"><ul>{string.Join("", (dr.DischargeMedications ?? new()).Select(m => $"<li>{m.Name} {(string.IsNullOrWhiteSpace(m.Dosage) ? "" : m.Dosage)} {(string.IsNullOrWhiteSpace(m.Instructions) ? "" : m.Instructions)}</li>"))}</ul></div>" } },
+                new { title = "Doporučení a kontroly", text = new { status = "generated", div = $"<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>{dr.Recommendations}</p><p>{dr.FollowUp}</p></div>" } }
+            }
+        };
+
+    private static string ToFhirGender(string? g) => g?.ToUpperInvariant() switch
+    {
+        "M" => "male",
+        "Z" => "female",
+        _ => "unknown"
+    };
+
+    private static string? MapCodeSystem(string? cs) => cs?.ToUpperInvariant() switch
+    {
+        "SNOMED" => "http://snomed.info/sct",
+        "ICD-10" => "http://hl7.org/fhir/sid/icd-10",
+        _ => null
+    };
+
+    private static string? MapCriticality(string? c) => c?.ToLowerInvariant() switch
+    {
+        "low" => "low",
+        "high" => "high",
+        "unable-to-assess" => "unable-to-assess",
+        _ => null
+    };
 
     // ---------- Helpers for uniform responses ----------
     private static IResult Ok<T>(T data, Guid zadostId, string stav = "OK", string? subStav = null, string? popis = null)
@@ -534,63 +1132,96 @@ public static class Program
         public DateTime Vytvoreno { get; set; }
         public string Stav { get; set; } = "aktivni";
     }
-    // Patient Summary DTOs (odpovídá rozsahu CZ PS a IPS sekcím)
-public sealed class PatientHeader
-{
-    public string Rid { get; set; } = default!;
-    public string GivenName { get; set; } = default!;
-    public string FamilyName { get; set; } = default!;
-    public DateOnly DateOfBirth { get; set; }
-    public string Gender { get; set; } = default!;
-}
 
-public sealed class PatientSummary
-{
-    public PatientHeader Header { get; set; } = default!;
-    public PatientSummaryBody Body { get; set; } = default!;
-}
+    // Patient Summary DTOs
+    public sealed class PatientHeader
+    {
+        public string Rid { get; set; } = default!;
+        public string GivenName { get; set; } = default!;
+        public string FamilyName { get; set; } = default!;
+        public DateOnly DateOfBirth { get; set; }
+        public string Gender { get; set; } = default!;
+    }
 
-public sealed class PatientSummaryBody
-{
-    public List<Allergy>? Allergies { get; set; }
-    public List<Vaccination>? Vaccinations { get; set; }
-    public List<Problem>? Problems { get; set; }
-    public List<Medication>? Medications { get; set; }
-    public List<Implant>? Implants { get; set; }
-    public string? AdvanceDirectives { get; set; }
-}
+    public sealed class PatientSummary
+    {
+        public PatientHeader Header { get; set; } = default!;
+        public PatientSummaryBody Body { get; set; } = default!;
+    }
 
-public sealed class Allergy
-{
-    public string Text { get; set; } = default!;
-    public string? CodeSystem { get; set; }
-    public string? Code { get; set; }
-    public string? Criticality { get; set; } // low|high|unable-to-assess
-}
+    public sealed class PatientSummaryBody
+    {
+        public List<Allergy>? Allergies { get; set; }
+        public List<Vaccination>? Vaccinations { get; set; }
+        public List<Problem>? Problems { get; set; }
+        public List<Medication>? Medications { get; set; }
+        public List<Implant>? Implants { get; set; }
+        public string? AdvanceDirectives { get; set; }
+    }
 
-public sealed class Vaccination
-{
-    public string Text { get; set; } = default!;
-    public DateOnly? Date { get; set; }
-}
+    public sealed class Allergy
+    {
+        public string Text { get; set; } = default!;
+        public string? CodeSystem { get; set; }
+        public string? Code { get; set; }
+        public string? Criticality { get; set; } // low|high|unable-to-assess
+    }
 
-public sealed class Problem
-{
-    public string Text { get; set; } = default!;
-    public string? CodeSystem { get; set; }
-    public string? Code { get; set; }
-}
+    public sealed class Vaccination
+    {
+        public string Text { get; set; } = default!;
+        public DateOnly? Date { get; set; }
+    }
 
-public sealed class Medication
-{
-    public string Text { get; set; } = default!;
-    public string? Dosage { get; set; }
-    public string? Route { get; set; }
-}
+    public sealed class Problem
+    {
+        public string Text { get; set; } = default!;
+        public string? CodeSystem { get; set; }
+        public string? Code { get; set; }
+    }
 
-public sealed class Implant
-{
-    public string Text { get; set; } = default!;
-    public DateOnly? Date { get; set; }
-}
+    public sealed class Medication
+    {
+        public string Text { get; set; } = default!;
+        public string? Dosage { get; set; }
+        public string? Route { get; set; }
+    }
+
+    public sealed class Implant
+    {
+        public string Text { get; set; } = default!;
+        public DateOnly? Date { get; set; }
+    }
+
+    // Discharge Report DTOs (eHN HDR / CZ)
+    public sealed class DischargeHeader
+    {
+        public string Rid { get; set; } = default!;
+        public string FacilityIco { get; set; } = default!;
+        public string FacilityName { get; set; } = default!;
+        public string Department { get; set; } = default!;
+        public string AttendingDoctor { get; set; } = default!;
+        public DateTime Admission { get; set; }
+        public DateTime Discharge { get; set; }
+        public string? DischargeDestination { get; set; }
+    }
+
+    public sealed class DischargeReport
+    {
+        public DischargeHeader Header { get; set; } = default!;
+        public string ReasonForAdmission { get; set; } = default!;
+        public List<string>? Diagnoses { get; set; }
+        public List<string>? Procedures { get; set; }
+        public List<MedicationOnDischarge>? DischargeMedications { get; set; }
+        public string Course { get; set; } = default!;
+        public string FollowUp { get; set; } = default!;
+        public string Recommendations { get; set; } = default!;
+    }
+
+    public sealed class MedicationOnDischarge
+    {
+        public string Name { get; set; } = default!;
+        public string? Dosage { get; set; }
+        public string? Instructions { get; set; }
+    }
 }
