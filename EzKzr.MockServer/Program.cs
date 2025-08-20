@@ -10,6 +10,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Routing;
+using System.Globalization;
+using System.Text;
+
 
 namespace EzKzr.MockServer;
 
@@ -170,7 +173,154 @@ new DischargeReport
     Recommendations = "Dostatečný pitný režim."
 }
     ];
+    // --- Laboratory Results seed ---
+    private static readonly List<LabReport> LabReports =
+    [
+        new LabReport
+    {
+        Header = new LabHeader
+        {
+            Rid = "1234567891",
+            Issued = new DateTime(2024, 10, 17, 13, 0, 0, DateTimeKind.Utc),
+            Laboratory = "Oddělení klinické biochemie Nemocnice Alfa",
+            OrderId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        },
+        Results =
+        [
+            new LabResult { Code = "718-7",  Text = "Hemoglobin", Value = "145", Unit = "g/L",     ReferenceRange = "135-175", AbnormalFlag = "N" },
+            new LabResult { Code = "6690-2", Text = "Leukocyty",  Value = "6.2", Unit = "10^9/L", ReferenceRange = "4.0-10.0", AbnormalFlag = "N" },
+            new LabResult { Code = "2345-7", Text = "Glukóza",    Value = "7.8", Unit = "mmol/L", ReferenceRange = "3.9-5.5", AbnormalFlag = "H" }
+        ]
+    },
+    new LabReport
+    {
+        Header = new LabHeader
+        {
+            Rid = "2345678902",
+            Issued = new DateTime(2024, 6, 7, 11, 0, 0, DateTimeKind.Utc),
+            Laboratory = "Laboratoř Poliklinika Beta",
+            OrderId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+        },
+        Results =
+        [
+            new LabResult { Code = "2339-0", Text = "Sodík",  Value = "139", Unit = "mmol/L", ReferenceRange = "136-145", AbnormalFlag = "N" },
+            new LabResult { Code = "2823-3", Text = "Draslík", Value = "4.2", Unit = "mmol/L", ReferenceRange = "3.5-5.1", AbnormalFlag = "N" }
+        ]
+    }
+    ];
 
+    // --- Imaging Reports seed ---
+    private static readonly List<ImagingReport> ImagingReports =
+    [
+        new ImagingReport
+    {
+        Header = new ImagingHeader
+        {
+            Rid = "1234567891",
+            Performed = new DateTime(2024, 10, 10, 9, 30, 0, DateTimeKind.Utc),
+            Modality = "CT",
+            Performer = "MUDr. Alice Kovářová",
+            FacilityName = "Nemocnice Alfa, a.s."
+        },
+        Indication = "Bolest na hrudi.",
+        Findings  = "Subtotální stenóza LAD. Postisch. změny přední stěny.",
+        Conclusion = "Nález odpovídá ICHS. Doporučena PCI."
+    },
+    new ImagingReport
+    {
+        Header = new ImagingHeader
+        {
+            Rid = "2345678902",
+            Performed = new DateTime(2024, 6, 5, 10, 0, 0, DateTimeKind.Utc),
+            Modality = "RTG",
+            Performer = "MUDr. Pavel Hrubý",
+            FacilityName = "Poliklinika Beta, s.r.o."
+        },
+        Indication = "Synkopa.",
+        Findings  = "Bez čerstvých traumatických změn. Srdce nezvětšeno.",
+        Conclusion = "Bez akutní patologie."
+    }
+    ];
+
+    // --- Orders seed (Lab + Imaging) ---
+    private static readonly List<LabOrder> LabOrders =
+    [
+        new LabOrder
+    {
+        Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+        Rid = "1234567891",
+        Created = new DateTime(2024, 10, 9, 8, 0, 0, DateTimeKind.Utc),
+        Tests = ["Glukóza", "Hemoglobin", "Leukocyty"],
+        RequesterIco = "12345678",
+        RequesterName = "Nemocnice Alfa, a.s.",
+        Status = "received"
+    },
+    new LabOrder
+    {
+        Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+        Rid = "2345678902",
+        Created = new DateTime(2024, 6, 3, 8, 30, 0, DateTimeKind.Utc),
+        Tests = ["Sodík", "Draslík"],
+        RequesterIco = "87654321",
+        RequesterName = "Poliklinika Beta, s.r.o.",
+        Status = "received"
+    }
+    ];
+
+    private static readonly List<ImagingOrder> ImagingOrders =
+    [
+        new ImagingOrder
+    {
+        Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+        Rid = "1234567891",
+        Created = new DateTime(2024, 10, 9, 9, 0, 0, DateTimeKind.Utc),
+        RequestedModality = "CT",
+        RequestedProcedure = "CT koronarografie",
+        ClinicalInfo = "Bolest na hrudi",
+        RequesterIco = "12345678",
+        RequesterName = "Nemocnice Alfa, a.s.",
+        Status = "received"
+    },
+    new ImagingOrder
+    {
+        Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+        Rid = "2345678902",
+        Created = new DateTime(2024, 6, 3, 10, 0, 0, DateTimeKind.Utc),
+        RequestedModality = "RTG",
+        RequestedProcedure = "RTG hrudníku PA",
+        ClinicalInfo = "Synkopa",
+        RequesterIco = "87654321",
+        RequesterName = "Poliklinika Beta, s.r.o.",
+        Status = "received"
+    }
+    ];
+
+    // --- EMS (Záznam o výjezdu) seed ---
+    private static readonly List<EmsRun> EmsRuns =
+    [
+        new EmsRun
+    {
+        Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+        Rid = "1234567891",
+        Started = new DateTime(2024, 10, 9, 10, 0, 0, DateTimeKind.Utc),
+        Reason = "Bolest na hrudi",
+        Vitals = new Vitals { Systolic = 150, Diastolic = 90, HeartRate = 105, Spo2 = 94, Temperature = 36.9m },
+        Interventions = ["ASA 500 mg p.o.", "Nitroglycerin spray"],
+        Outcome = "Převoz do nemocnice",
+        Destination = "Nemocnice Alfa, a.s."
+    },
+    new EmsRun
+    {
+        Id = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+        Rid = "2345678902",
+        Started = new DateTime(2024, 6, 3, 8, 15, 0, DateTimeKind.Utc),
+        Reason = "Synkopa",
+        Vitals = new Vitals { Systolic = 125, Diastolic = 80, HeartRate = 78, Spo2 = 98, Temperature = 36.6m },
+        Interventions = ["Monitoring, EKG"],
+        Outcome = "Předán na interní ambulanci",
+        Destination = "Poliklinika Beta, s.r.o."
+    }
+    ];
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -295,105 +445,223 @@ new DischargeReport
         MapNotificationEndpoints(krpzs);
 
         // ----- SAMPLES (ukázková data a volání) -----
-var samples = api.MapGroup("/samples");
+        var samples = api.MapGroup("/samples");
 
-samples.MapGet("/", () =>
-{
-    var exZadostId = "11111111-1111-1111-1111-111111111111";
-    var exDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
-    return Results.Ok(new
-    {
-        note = "Ukázková data a příklady volání.",
-        providers = Providers.Select(p => new { p.Ico, p.Nazev }).ToArray(),
-        workers = Workers.Select(w => new { w.KrzpId, w.Jmeno, w.Prijmeni, narozeni = w.DatumNarozeni }).ToArray(),
-        patientRids = PatientSummaries.Select(p => new { p.Header.Rid, p.Header.GivenName, p.Header.FamilyName }).ToArray(),
-        examples = new
+        samples.MapGet("/", () =>
         {
-            ciselnik_stat = $"/api/v1/ciselnik/{exZadostId}/stat?ucel=Test&datum={exDate}",
-            ciselnik_pohlavi = $"/api/v1/ciselnik/{exZadostId}/pohlavi?ucel=Test&datum={exDate}",
-            ciselnik_pojistovna = $"/api/v1/ciselnik/{exZadostId}/zdravotni_pojistovna?ucel=Test&datum={exDate}",
+            var exZadostId = "11111111-1111-1111-1111-111111111111";
+            var exDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+            return Results.Ok(new
+            {
+                note = "Ukázková data a příklady volání.",
+                providers = Providers.Select(p => new { p.Ico, p.Nazev }).ToArray(),
+                workers = Workers.Select(w => new { w.KrzpId, w.Jmeno, w.Prijmeni, narozeni = w.DatumNarozeni }).ToArray(),
+                patientRids = PatientSummaries.Select(p => new { p.Header.Rid, p.Header.GivenName, p.Header.FamilyName }).ToArray(),
+                examples = new
+                {
+                    ciselnik_stat = $"/api/v1/ciselnik/{exZadostId}/stat?ucel=Test&datum={exDate}",
+                    ciselnik_pohlavi = $"/api/v1/ciselnik/{exZadostId}/pohlavi?ucel=Test&datum={exDate}",
+                    ciselnik_pojistovna = $"/api/v1/ciselnik/{exZadostId}/zdravotni_pojistovna?ucel=Test&datum={exDate}",
 
-            krpzs_get_ico = $"/api/v1/krpzs/hledat/{exZadostId}/ico?ico={Providers[0].Ico}&ucel=Test&datum={exDate}",
+                    krpzs_get_ico = $"/api/v1/krpzs/hledat/{exZadostId}/ico?ico={Providers[0].Ico}&ucel=Test&datum={exDate}",
 
-            krzp_get_id = $"/api/v1/krzp/hledat/{exZadostId}/krzpid?id={Workers[0].KrzpId}&ucel=Test&datum={exDate}",
-            krzp_get_osoba =
-                $"/api/v1/krzp/hledat/{exZadostId}/jmeno_prijmeni_datum_narozeni?jmeno={Uri.EscapeDataString(Workers[0].Jmeno)}&prijmeni={Uri.EscapeDataString(Workers[0].Prijmeni)}&datumNarozeni={Workers[0].DatumNarozeni:yyyy-MM-dd}&ucel=Test&datum={exDate}",
-            krzp_get_zamestnavatel =
-                $"/api/v1/krzp/hledat/{exZadostId}/zamestnavatel?ico={Workers[0].ZamestnavatelIco}&ucel=Test&datum={exDate}",
+                    krzp_get_id = $"/api/v1/krzp/hledat/{exZadostId}/krzpid?id={Workers[0].KrzpId}&ucel=Test&datum={exDate}",
+                    krzp_get_osoba =
+                        $"/api/v1/krzp/hledat/{exZadostId}/jmeno_prijmeni_datum_narozeni?jmeno={Uri.EscapeDataString(Workers[0].Jmeno)}&prijmeni={Uri.EscapeDataString(Workers[0].Prijmeni)}&datumNarozeni={Workers[0].DatumNarozeni:yyyy-MM-dd}&ucel=Test&datum={exDate}",
+                    krzp_get_zamestnavatel =
+                        $"/api/v1/krzp/hledat/{exZadostId}/zamestnavatel?ico={Workers[0].ZamestnavatelIco}&ucel=Test&datum={exDate}",
 
-            ps_by_rid = $"/api/v1/ps/rid/{exZadostId}?rid={PatientSummaries[0].Header.Rid}&ucel=Test&datum={exDate}",
-            ps_by_osoba =
-                $"/api/v1/ps/osoba/{exZadostId}?jmeno={Uri.EscapeDataString(PatientSummaries[0].Header.GivenName)}&prijmeni={Uri.EscapeDataString(PatientSummaries[0].Header.FamilyName)}&datumNarozeni={PatientSummaries[0].Header.DateOfBirth:yyyy-MM-dd}&ucel=Test&datum={exDate}",
+                    ps_by_rid = $"/api/v1/ps/rid/{exZadostId}?rid={PatientSummaries[0].Header.Rid}&ucel=Test&datum={exDate}",
+                    ps_by_osoba =
+                        $"/api/v1/ps/osoba/{exZadostId}?jmeno={Uri.EscapeDataString(PatientSummaries[0].Header.GivenName)}&prijmeni={Uri.EscapeDataString(PatientSummaries[0].Header.FamilyName)}&datumNarozeni={PatientSummaries[0].Header.DateOfBirth:yyyy-MM-dd}&ucel=Test&datum={exDate}",
 
-            hdr_by_rid = $"/api/v1/hdr/rid/{exZadostId}?rid={DischargeReports[0].Header.Rid}&ucel=Test&datum={exDate}",
+                    hdr_by_rid = $"/api/v1/hdr/rid/{exZadostId}?rid={DischargeReports[0].Header.Rid}&ucel=Test&datum={exDate}",
 
-            fhir_metadata = "/fhir/metadata",
-            fhir_patient = $"/fhir/Patient/{PatientSummaries[0].Header.Rid}",
-            fhir_summary = $"/fhir/Patient/{PatientSummaries[0].Header.Rid}/$summary",
-            fhir_document = $"/fhir/Bundle/{DischargeReports[0].Header.Rid}/$discharge"
-        }
-    });
-})
-.Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+                    fhir_metadata = "/fhir/metadata",
+                    fhir_patient = $"/fhir/Patient/{PatientSummaries[0].Header.Rid}",
+                    fhir_summary = $"/fhir/Patient/{PatientSummaries[0].Header.Rid}/$summary",
+                    fhir_document = $"/fhir/Bundle/{DischargeReports[0].Header.Rid}/$discharge"
+                }
+            });
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
-samples.MapGet("/providers", () => Results.Ok(Providers))
-    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+        samples.MapGet("/providers", () => Results.Ok(Providers))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
-samples.MapGet("/workers", () => Results.Ok(Workers))
-    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+        samples.MapGet("/workers", () => Results.Ok(Workers))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
-samples.MapGet("/ps", () => Results.Ok(PatientSummaries))
-    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+        samples.MapGet("/ps", () => Results.Ok(PatientSummaries))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
-samples.MapGet("/hdr", () => Results.Ok(DischargeReports))
-    .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+        samples.MapGet("/hdr", () => Results.Ok(DischargeReports))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+        samples.MapGet("/lab", () => Results.Ok(LabReports))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
-// ukázkové request body pro POSTy
-samples.MapGet("/body/reklamace", () =>
-{
-    var body = new ReklamaceBody
-    {
-        ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
-        ZadostData = new UdajReklamaceBulk
+        samples.MapGet("/mi", () => Results.Ok(ImagingReports))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+        samples.MapGet("/ems", () => Results.Ok(EmsRuns))
+            .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+        // ukázkové request body (LAB/MI/EMS)
+        samples.MapGet("/body/lab-report", () =>
         {
-            Krpzsid = 123456789,
-            UlozkaId = "ORG001",
-            UlozkaRef = 42,
-            DatumReklamace = DateTime.UtcNow.Date,
-            Reklamujici = new Reklamujici
+            var sample = new CreateLabReport
             {
-                Ico = Providers[0].Ico,
-                Nazev = Providers[0].Nazev,
-                KontaktEmail = "it@example.org"
-            },
-            PolozkyReklamace = new List<UdajReklamace>
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new LabReport
+                {
+                    Header = new LabHeader
+                    {
+                        Rid = PatientSummaries[0].Header.Rid,
+                        Issued = DateTime.UtcNow,
+                        Laboratory = "Ukázková laboratoř",
+                        OrderId = LabOrders[0].Id.ToString()
+                    },
+                    Results = [new LabResult { Code = "718-7", Text = "Hemoglobin", Value = "140", Unit = "g/L", ReferenceRange = "135-175", AbnormalFlag = "N" }]
+                }
+            };
+            return Results.Ok(sample);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+        samples.MapGet("/body/lab-order", () =>
+        {
+            var sample = new CreateLabOrder
             {
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new LabOrder
+                {
+                    Id = Guid.NewGuid(),
+                    Rid = PatientSummaries[0].Header.Rid,
+                    Created = DateTime.UtcNow,
+                    Tests = ["Glukóza", "Hemoglobin"],
+                    RequesterIco = Providers[0].Ico,
+                    RequesterName = Providers[0].Nazev,
+                    Status = "new"
+                }
+            };
+            return Results.Ok(sample);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+        samples.MapGet("/body/imaging-report", () =>
+        {
+            var sample = new CreateImagingReport
+            {
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new ImagingReport
+                {
+                    Header = new ImagingHeader
+                    {
+                        Rid = PatientSummaries[0].Header.Rid,
+                        Performed = DateTime.UtcNow,
+                        Modality = "US",
+                        Performer = "MUDr. Tester",
+                        FacilityName = Providers[0].Nazev
+                    },
+                    Indication = "Kontrolní vyšetření",
+                    Findings = "Bez patrné patologie.",
+                    Conclusion = "Nález v normě."
+                }
+            };
+            return Results.Ok(sample);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+        samples.MapGet("/body/imaging-order", () =>
+        {
+            var sample = new CreateImagingOrder
+            {
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new ImagingOrder
+                {
+                    Id = Guid.NewGuid(),
+                    Rid = PatientSummaries[0].Header.Rid,
+                    Created = DateTime.UtcNow,
+                    RequestedModality = "CT",
+                    RequestedProcedure = "CT hrudníku",
+                    ClinicalInfo = "Kontrola po terapii",
+                    RequesterIco = Providers[0].Ico,
+                    RequesterName = Providers[0].Nazev,
+                    Status = "new"
+                }
+            };
+            return Results.Ok(sample);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+        samples.MapGet("/body/ems-record", () =>
+        {
+            var sample = new CreateEmsRecord
+            {
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new EmsRun
+                {
+                    Id = Guid.NewGuid(),
+                    Rid = PatientSummaries[0].Header.Rid,
+                    Started = DateTime.UtcNow,
+                    Reason = "Bolest na hrudi",
+                    Vitals = new Vitals { Systolic = 150, Diastolic = 90, HeartRate = 100, Spo2 = 95, Temperature = 36.8m },
+                    Interventions = ["ASA 500 mg", "Monitoring"],
+                    Outcome = "Převoz",
+                    Destination = Providers[0].Nazev
+                }
+            };
+            return Results.Ok(sample);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+
+
+        // ukázkové request body pro POSTy
+        samples.MapGet("/body/reklamace", () =>
+        {
+            var body = new ReklamaceBody
+            {
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new UdajReklamaceBulk
+                {
+                    Krpzsid = 123456789,
+                    UlozkaId = "ORG001",
+                    UlozkaRef = 42,
+                    DatumReklamace = DateTime.UtcNow.Date,
+                    Reklamujici = new Reklamujici
+                    {
+                        Ico = Providers[0].Ico,
+                        Nazev = Providers[0].Nazev,
+                        KontaktEmail = "it@example.org"
+                    },
+                    PolozkyReklamace = new List<UdajReklamace>
+                    {
                 new UdajReklamace { Klic = "Nazev", PuvodniHodnota = "Nemocnice Alfa, a.s.", PozadovanaHodnota = "Nemocnice ALFA a.s." }
-            },
-            Zduvodneni = "Oprava údajů v registru",
-            PopisReklamace = "Formální úprava názvu"
-        }
-    };
-    return Results.Ok(body);
-})
-.Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+                    },
+                    Zduvodneni = "Oprava údajů v registru",
+                    PopisReklamace = "Formální úprava názvu"
+                }
+            };
+            return Results.Ok(body);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
-samples.MapGet("/body/notifikace", () =>
-{
-    var req = new CreateNotification
-    {
-        ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
-        ZadostData = new NotificationRequest
+        samples.MapGet("/body/notifikace", () =>
         {
-            System = "KRPZS",
-            Typ = "zmena-pzs",
-            Kriteria = $"ico={Providers[0].Ico}",
-            Kanal = "webhook"
-        }
-    };
-    return Results.Ok(req);
-})
-.Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
+            var req = new CreateNotification
+            {
+                ZadostInfo = new KzrDotaz { Ucel = "Test", Datum = DateTime.UtcNow },
+                ZadostData = new NotificationRequest
+                {
+                    System = "KRPZS",
+                    Typ = "zmena-pzs",
+                    Kriteria = $"ico={Providers[0].Ico}",
+                    Kanal = "webhook"
+                }
+            };
+            return Results.Ok(req);
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json);
 
         // ----- Patient Summary (EU PS/IPS mock) -----
         var ps = api.MapGroup("/ps");
@@ -477,6 +745,198 @@ samples.MapGet("/body/notifikace", () =>
         .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
         .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
         .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // ----- LAB (laboratorní výsledky + žádanky) -----
+        var lab = api.MapGroup("/lab");
+
+        // GET /api/v1/lab/rid/{zadostId}?rid=...
+        lab.MapGet("/rid/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(rid)) errs.Add("rid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var list = LabReports.Where(x => x.Header.Rid == rid).ToList();
+            if (list.Count == 0) return NotFound($"Laboratorní zpráva pro RID {rid} nenalezena.", zadostId);
+            return Ok(list, zadostId, "OK", popis: "LAB");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // POST /api/v1/lab/report/{zadostId}
+        lab.MapPost("/report/{zadostId:guid}", (Guid zadostId, CreateLabReport body) =>
+        {
+            var errs = ValidateCommon(zadostId, body.ZadostInfo?.Ucel, body.ZadostInfo?.Datum).ToList();
+            if (body.ZadostData is null) errs.Add("ZadostData je povinné.");
+            else
+            {
+                if (body.ZadostData.Header is null || string.IsNullOrWhiteSpace(body.ZadostData.Header.Rid)) errs.Add("Header.Rid je povinné.");
+                if (body.ZadostData.Results is null || body.ZadostData.Results.Count == 0) errs.Add("Results musí obsahovat alespoň jednu položku.");
+            }
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            LabReports.Add(body.ZadostData!);
+            return Created(new { prijato = true, registr = "LAB", orderId = body.ZadostData!.Header.OrderId }, zadostId, popis: "LabReport přijata");
+        })
+        .Produces(StatusCodes.Status201Created, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json);
+
+        // POST /api/v1/lab/order/{zadostId}
+        lab.MapPost("/order/{zadostId:guid}", (Guid zadostId, CreateLabOrder body) =>
+        {
+            var errs = ValidateCommon(zadostId, body.ZadostInfo?.Ucel, body.ZadostInfo?.Datum).ToList();
+            if (body.ZadostData is null) errs.Add("ZadostData je povinné.");
+            else
+            {
+                if (string.IsNullOrWhiteSpace(body.ZadostData.Rid)) errs.Add("Rid je povinné.");
+                if (body.ZadostData.Tests is null || body.ZadostData.Tests.Count == 0) errs.Add("Tests musí obsahovat alespoň jednu položku.");
+            }
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            if (body.ZadostData!.Id == Guid.Empty) body.ZadostData.Id = Guid.NewGuid();
+            body.ZadostData.Status = "received";
+            LabOrders.Add(body.ZadostData);
+            return Created(body.ZadostData, zadostId, popis: "LabOrder přijata");
+        })
+        .Produces(StatusCodes.Status201Created, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json);
+
+        // GET /api/v1/lab/order/{zadostId}?id=...
+        lab.MapGet("/order/{zadostId:guid}", (Guid zadostId, Guid id, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+            var o = LabOrders.FirstOrDefault(x => x.Id == id);
+            if (o is null) return NotFound("Laboratorní žádanka nenalezena.", zadostId);
+            return Ok(o, zadostId, "OK", popis: "LabOrder");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // GET /api/v1/lab/result_by_order/{zadostId}?id=...
+        lab.MapGet("/result_by_order/{zadostId:guid}", (Guid zadostId, Guid id, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+            var list = LabReports.Where(x => string.Equals(x.Header.OrderId, id.ToString(), StringComparison.OrdinalIgnoreCase)).ToList();
+            if (list.Count == 0) return NotFound("Žádné výsledky pro zadanou žádanku.", zadostId);
+            return Ok(list, zadostId, "OK", popis: "LAB");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+
+        // ----- MI (zpráva z obrazového vyšetření + žádanky) -----
+        var mi = api.MapGroup("/mi");
+
+        // GET /api/v1/mi/rid/{zadostId}?rid=...
+        mi.MapGet("/rid/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(rid)) errs.Add("rid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var list = ImagingReports.Where(x => x.Header.Rid == rid).ToList();
+            if (list.Count == 0) return NotFound($"Zpráva z obrazového vyšetření pro RID {rid} nenalezena.", zadostId);
+            return Ok(list, zadostId, "OK", popis: "MI");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // POST /api/v1/mi/report/{zadostId}
+        mi.MapPost("/report/{zadostId:guid}", (Guid zadostId, CreateImagingReport body) =>
+        {
+            var errs = ValidateCommon(zadostId, body.ZadostInfo?.Ucel, body.ZadostInfo?.Datum).ToList();
+            if (body.ZadostData is null) errs.Add("ZadostData je povinné.");
+            else
+            {
+                if (body.ZadostData.Header is null || string.IsNullOrWhiteSpace(body.ZadostData.Header.Rid)) errs.Add("Header.Rid je povinné.");
+                if (string.IsNullOrWhiteSpace(body.ZadostData.Findings)) errs.Add("Findings je povinné.");
+                if (string.IsNullOrWhiteSpace(body.ZadostData.Conclusion)) errs.Add("Conclusion je povinné.");
+            }
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            ImagingReports.Add(body.ZadostData!);
+            return Created(new { prijato = true, registr = "MI" }, zadostId, popis: "ImagingReport přijata");
+        })
+        .Produces(StatusCodes.Status201Created, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json);
+
+        // POST /api/v1/mi/order/{zadostId}
+        mi.MapPost("/order/{zadostId:guid}", (Guid zadostId, CreateImagingOrder body) =>
+        {
+            var errs = ValidateCommon(zadostId, body.ZadostInfo?.Ucel, body.ZadostInfo?.Datum).ToList();
+            if (body.ZadostData is null) errs.Add("ZadostData je povinné.");
+            else
+            {
+                if (string.IsNullOrWhiteSpace(body.ZadostData.Rid)) errs.Add("Rid je povinné.");
+                if (string.IsNullOrWhiteSpace(body.ZadostData.RequestedModality)) errs.Add("RequestedModality je povinné.");
+            }
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            if (body.ZadostData!.Id == Guid.Empty) body.ZadostData.Id = Guid.NewGuid();
+            body.ZadostData.Status = "received";
+            ImagingOrders.Add(body.ZadostData);
+            return Created(body.ZadostData, zadostId, popis: "ImagingOrder přijata");
+        })
+        .Produces(StatusCodes.Status201Created, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json);
+
+        // GET /api/v1/mi/order/{zadostId}?id=...
+        mi.MapGet("/order/{zadostId:guid}", (Guid zadostId, Guid id, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+            var o = ImagingOrders.FirstOrDefault(x => x.Id == id);
+            if (o is null) return NotFound("Obrazová žádanka nenalezena.", zadostId);
+            return Ok(o, zadostId, "OK", popis: "ImagingOrder");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+
+        // ----- EMS (Záznam o výjezdu) -----
+        var ems = api.MapGroup("/ems");
+
+        // GET /api/v1/ems/rid/{zadostId}?rid=...
+        ems.MapGet("/rid/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(rid)) errs.Add("rid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var list = EmsRuns.Where(x => x.Rid == rid).ToList();
+            if (list.Count == 0) return NotFound($"Záznam o výjezdu pro RID {rid} nenalezen.", zadostId);
+            return Ok(list, zadostId, "OK", popis: "EMS");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // POST /api/v1/ems/record/{zadostId}
+        ems.MapPost("/record/{zadostId:guid}", (Guid zadostId, CreateEmsRecord body) =>
+        {
+            var errs = ValidateCommon(zadostId, body.ZadostInfo?.Ucel, body.ZadostInfo?.Datum).ToList();
+            if (body.ZadostData is null) errs.Add("ZadostData je povinné.");
+            else
+            {
+                if (string.IsNullOrWhiteSpace(body.ZadostData.Rid)) errs.Add("Rid je povinné.");
+                if (body.ZadostData.Started == default) errs.Add("Started je povinné.");
+            }
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            if (body.ZadostData!.Id == Guid.Empty) body.ZadostData.Id = Guid.NewGuid();
+            EmsRuns.Add(body.ZadostData);
+            return Created(body.ZadostData, zadostId, popis: "EMS Record přijat");
+        })
+        .Produces(StatusCodes.Status201Created, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json);
+
 
         // ----- KRZP (zdravotničtí pracovníci) -----
         var krzp = api.MapGroup("/krzp");
@@ -621,7 +1081,9 @@ samples.MapGet("/body/notifikace", () =>
                             new { type = "Immunization",          interaction = new[] { new { code = "search-type" } } },
                             new { type = "Device",                interaction = new[] { new { code = "search-type" } } },
                             new { type = "Composition",           interaction = new[] { new { code = "search-type" } } },
-                            new { type = "DocumentReference",     interaction = new[] { new { code = "search-type" } } }
+                            new { type = "DocumentReference",     interaction = new[] { new { code = "search-type" } } },
+                            new { type = "Observation",       interaction = new[] { new { code = "search-type" } } },
+new { type = "DiagnosticReport",  interaction = new[] { new { code = "search-type" } } }
                         }
                     }
                 }
@@ -690,7 +1152,41 @@ samples.MapGet("/body/notifikace", () =>
         })
         .Produces(StatusCodes.Status200OK, contentType: FhirJson)
         .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
+        // FHIR Observation (LAB)
+        fhir.MapGet("/Observation", (string patient, string? category) =>
+        {
+            if (!string.Equals(category, "laboratory", StringComparison.OrdinalIgnoreCase))
+                return Fhir(ToSearchBundle(Array.Empty<object>()));
+            var list = LabReports.Where(x => x.Header.Rid == patient)
+                                 .SelectMany(r => r.Results ?? new())
+                                 .Select((res, i) => FhirLabObservation(res, patient, i + 1))
+                                 .ToList();
+            return list.Count == 0 ? FhirNotFound($"No LAB observations for patient {patient}.") : Fhir(ToSearchBundle(list));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
 
+        // FHIR DiagnosticReport (LAB/IMAGING)
+        fhir.MapGet("/DiagnosticReport", (string patient, string? category) =>
+        {
+            if (string.Equals(category, "laboratory", StringComparison.OrdinalIgnoreCase))
+            {
+                var list = LabReports.Where(x => x.Header.Rid == patient)
+                                     .Select(r => FhirLabDiagnosticReport(r))
+                                     .ToList();
+                return list.Count == 0 ? FhirNotFound($"No LAB report for patient {patient}.") : Fhir(ToSearchBundle(list));
+            }
+            if (string.Equals(category, "imaging", StringComparison.OrdinalIgnoreCase))
+            {
+                var list = ImagingReports.Where(x => x.Header.Rid == patient)
+                                         .Select(r => FhirImagingDiagnosticReport(r))
+                                         .ToList();
+                return list.Count == 0 ? FhirNotFound($"No Imaging report for patient {patient}.") : Fhir(ToSearchBundle(list));
+            }
+            return Fhir(ToSearchBundle(Array.Empty<object>()));
+        })
+        .Produces(StatusCodes.Status200OK, contentType: FhirJson)
+        .Produces(StatusCodes.Status404NotFound, contentType: FhirJson);
         // Patient $summary => Bundle type=collection
         fhir.MapGet("/Patient/{rid}/$summary", (string rid) =>
         {
@@ -772,6 +1268,85 @@ samples.MapGet("/body/notifikace", () =>
         => DischargeReports.FirstOrDefault(x => x.Header.Rid == rid);
 
     // ---------- FHIR helpers ----------
+
+    private static object FhirLabDiagnosticReport(LabReport r)
+        => new
+        {
+            resourceType = "DiagnosticReport",
+            id = $"labdr-{r.Header.Rid}-{r.Header.Issued:yyyyMMddHHmmss}",
+            status = "final",
+            category = new[]
+            {
+            new { coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/v2-0074", code = "LAB", display = "Laboratory" } } }
+            },
+            code = new
+            {
+                coding = new[] { new { system = "http://loinc.org", code = "11502-2", display = "Laboratory report" } },
+                text = "Laboratorní zpráva"
+            },
+            subject = new { reference = $"Patient/{r.Header.Rid}" },
+            effectiveDateTime = r.Header.Issued.ToString("o"),
+            issued = r.Header.Issued.ToString("o"),
+            performer = new[] { new { display = r.Header.Laboratory } },
+            result = (r.Results ?? new()).Select((res, i) => new { reference = $"Observation/labobs-{i + 1}-{r.Header.Rid}" })
+        };
+
+    private static object FhirLabObservation(LabResult res, string rid, int ix)
+    {
+        var s = (res.Value ?? "").Replace(",", ".");
+        var numeric = decimal.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var num);
+        return new
+        {
+            resourceType = "Observation",
+            id = $"labobs-{ix}-{rid}",
+            status = "final",
+            category = new[]
+            {
+            new { coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/observation-category", code = "laboratory", display = "Laboratory" } } }
+        },
+            code = new
+            {
+                text = res.Text,
+                coding = string.IsNullOrWhiteSpace(res.Code) ? null : new[] { new { system = "http://loinc.org", code = res.Code!, display = res.Text } }
+            },
+            subject = new { reference = $"Patient/{rid}" },
+            effectiveDateTime = DateTime.UtcNow.ToString("o"),
+            valueQuantity = numeric ? new { value = (double)num, unit = res.Unit } : null,
+            valueString = numeric ? null : res.Value,
+            referenceRange = string.IsNullOrWhiteSpace(res.ReferenceRange) ? null : new[] { new { text = res.ReferenceRange } },
+            interpretation = string.IsNullOrWhiteSpace(res.AbnormalFlag) ? null : new[] { new { text = res.AbnormalFlag } }
+        };
+    }
+
+    private static object FhirImagingDiagnosticReport(ImagingReport r)
+        => new
+        {
+            resourceType = "DiagnosticReport",
+            id = $"imgdr-{r.Header.Rid}-{r.Header.Performed:yyyyMMddHHmmss}",
+            status = "final",
+            category = new[]
+            {
+            new { coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/v2-0074", code = "RAD", display = "Radiology" } } }
+            },
+            code = new
+            {
+                coding = new[] { new { system = "http://loinc.org", code = "18748-4", display = "Diagnostic imaging report" } },
+                text = "Zpráva z obrazového vyšetření"
+            },
+            subject = new { reference = $"Patient/{r.Header.Rid}" },
+            effectiveDateTime = r.Header.Performed.ToString("o"),
+            issued = r.Header.Performed.ToString("o"),
+            performer = new[] { new { display = r.Header.FacilityName } },
+            conclusion = r.Conclusion,
+            presentedForm = new[]
+            {
+            new
+            {
+                contentType = "text/plain",
+                data = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{r.Findings}\n\nZávěr: {r.Conclusion}"))
+            }
+            }
+        };
     private static IResult Fhir(object payload, int statusCode = StatusCodes.Status200OK)
         => Results.Json(payload, contentType: FhirJson, statusCode: statusCode);
 
@@ -1224,4 +1799,95 @@ samples.MapGet("/body/notifikace", () =>
         public string? Dosage { get; set; }
         public string? Instructions { get; set; }
     }
+    // --- Laboratory DTOs ---
+public sealed class LabHeader
+{
+    public string Rid { get; set; } = default!;
+    public DateTime Issued { get; set; }
+    public string Laboratory { get; set; } = default!;
+    public string? OrderId { get; set; }
+}
+public sealed class LabResult
+{
+    public string Text { get; set; } = default!;
+    public string? Code { get; set; }
+    public string? Value { get; set; }
+    public string? Unit { get; set; }
+    public string? ReferenceRange { get; set; }
+    public string? AbnormalFlag { get; set; } // H|L|N
+}
+public sealed class LabReport
+{
+    public LabHeader Header { get; set; } = default!;
+    public List<LabResult> Results { get; set; } = [];
+}
+
+// --- Imaging DTOs ---
+public sealed class ImagingHeader
+{
+    public string Rid { get; set; } = default!;
+    public DateTime Performed { get; set; }
+    public string Modality { get; set; } = default!;
+    public string Performer { get; set; } = default!;
+    public string FacilityName { get; set; } = default!;
+}
+public sealed class ImagingReport
+{
+    public ImagingHeader Header { get; set; } = default!;
+    public string? Indication { get; set; }
+    public string Findings { get; set; } = default!;
+    public string Conclusion { get; set; } = default!;
+}
+
+// --- Orders DTOs ---
+public sealed class LabOrder
+{
+    public Guid Id { get; set; }
+    public string Rid { get; set; } = default!;
+    public DateTime Created { get; set; }
+    public List<string> Tests { get; set; } = [];
+    public string RequesterIco { get; set; } = default!;
+    public string RequesterName { get; set; } = default!;
+    public string Status { get; set; } = "new"; // new|received|in-progress|done|cancelled
+}
+public sealed class ImagingOrder
+{
+    public Guid Id { get; set; }
+    public string Rid { get; set; } = default!;
+    public DateTime Created { get; set; }
+    public string RequestedModality { get; set; } = default!;
+    public string RequestedProcedure { get; set; } = default!;
+    public string? ClinicalInfo { get; set; }
+    public string RequesterIco { get; set; } = default!;
+    public string RequesterName { get; set; } = default!;
+    public string Status { get; set; } = "new";
+}
+
+// --- EMS DTOs ---
+public sealed class EmsRun
+{
+    public Guid Id { get; set; }
+    public string Rid { get; set; } = default!;
+    public DateTime Started { get; set; }
+    public string Reason { get; set; } = default!;
+    public Vitals? Vitals { get; set; }
+    public List<string>? Interventions { get; set; }
+    public string? Outcome { get; set; }
+    public string? Destination { get; set; }
+}
+public sealed class Vitals
+{
+    public int? Systolic { get; set; }
+    public int? Diastolic { get; set; }
+    public int? HeartRate { get; set; }
+    public int? Spo2 { get; set; }
+    public decimal? Temperature { get; set; }
+}
+
+// --- Wrappers for POST bodies ---
+public sealed class CreateLabReport : KzrRequest<LabReport> { }
+public sealed class CreateImagingReport : KzrRequest<ImagingReport> { }
+public sealed class CreateLabOrder : KzrRequest<LabOrder> { }
+public sealed class CreateImagingOrder : KzrRequest<ImagingOrder> { }
+public sealed class CreateEmsRecord : KzrRequest<EmsRun> { }
 }
