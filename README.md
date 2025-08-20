@@ -1,3 +1,5 @@
+Varování, systém může obsahovat chyby.
+
 Co tím získáš
 	•	Swagger ukáže nové sekce:
 	•	GET /api/v1/samples – přehled dostupných testovacích hodnot + hotové URL pro volání.
