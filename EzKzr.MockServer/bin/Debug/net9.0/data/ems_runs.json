@@ -1,0 +1,21 @@
+[
+  {
+    "Id": "2964342a-98a1-4cb9-90cf-71e1134f1ff8",
+    "Rid": "1000000014",
+    "Started": "2025-08-05T16:32:40.338221Z",
+    "Reason": "Bolest na hrudi",
+    "Vitals": {
+      "Systolic": 150,
+      "Diastolic": 90,
+      "HeartRate": 100,
+      "Spo2": 95,
+      "Temperature": 36.8
+    },
+    "Interventions": [
+      "ASA 500 mg",
+      "Monitoring"
+    ],
+    "Outcome": "P\u0159evoz",
+    "Destination": "Nemocnice Alfa a.s."
+  }
+]

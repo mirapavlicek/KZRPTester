@@ -1,0 +1,13 @@
+[
+  {
+    "Id": "94d4d688-6fbf-4ee9-97f9-9d501dd35a8e",
+    "Rid": "1000000014",
+    "Created": "2025-08-16T16:32:40.337225Z",
+    "RequestedModality": "CT",
+    "RequestedProcedure": "CT hrudn\u00EDku",
+    "ClinicalInfo": "Kontrola",
+    "RequesterIco": "12345678",
+    "RequesterName": "Nemocnice Alfa a.s.",
+    "Status": "received"
+  }
+]

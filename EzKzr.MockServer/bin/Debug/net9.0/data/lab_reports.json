@@ -1,0 +1,20 @@
+[
+  {
+    "Header": {
+      "Rid": "1000000014",
+      "Issued": "2025-08-18T16:32:40.333029Z",
+      "Laboratory": "Lab Alfa",
+      "OrderId": "75ce8c21-b748-41c4-a8ad-dc03685de436"
+    },
+    "Results": [
+      {
+        "Code": "718-7",
+        "Text": "Hemoglobin",
+        "Value": "140",
+        "Unit": "g/L",
+        "ReferenceRange": "135-175",
+        "AbnormalFlag": "N"
+      }
+    ]
+  }
+]

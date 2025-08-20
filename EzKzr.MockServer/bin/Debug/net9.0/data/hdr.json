@@ -1,0 +1,29 @@
+[
+  {
+    "Header": {
+      "Rid": "1000000014",
+      "Discharge": "2025-08-13T16:32:40.330824Z",
+      "AttendingDoctor": "MUDr. Alfa",
+      "FacilityName": "Nemocnice Alfa a.s."
+    },
+    "ReasonForAdmission": "Bolesti na hrudi",
+    "Diagnoses": [
+      "I21.9 Akutn\u00ED infarkt myokardu",
+      "I10 Hypertenze"
+    ],
+    "Procedures": [
+      "Koronarografie",
+      "PCI"
+    ],
+    "Course": "Nezkomplikovan\u00FD pr\u016Fb\u011Bh",
+    "DischargeMedications": [
+      {
+        "Name": "ASA",
+        "Dosage": "100 mg 1-0-0",
+        "Instructions": null
+      }
+    ],
+    "Recommendations": "Kontrola Kardiologie 6 t\u00FDdn\u016F",
+    "FollowUp": "PL do 3 dn\u016F"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "KrzpId": 1001,
+    "Jmeno": "Jan",
+    "Prijmeni": "Nov\u00E1k",
+    "DatumNarozeni": "1980-05-01",
+    "ZamestnavatelIco": "12345678"
+  },
+  {
+    "KrzpId": 1002,
+    "Jmeno": "Eva",
+    "Prijmeni": "Svobodov\u00E1",
+    "DatumNarozeni": "1985-07-10",
+    "ZamestnavatelIco": "87654321"
+  },
+  {
+    "KrzpId": 1003,
+    "Jmeno": "Petr",
+    "Prijmeni": "Dvo\u0159\u00E1k",
+    "DatumNarozeni": "1990-01-15",
+    "ZamestnavatelIco": "12345678"
+  }
+]

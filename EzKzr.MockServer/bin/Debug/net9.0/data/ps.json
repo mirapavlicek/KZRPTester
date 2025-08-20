@@ -1,0 +1,46 @@
+[
+  {
+    "Header": {
+      "Rid": "1000000014",
+      "GivenName": "Karel",
+      "FamilyName": "Test",
+      "DateOfBirth": "1975-03-14",
+      "Gender": "M"
+    },
+    "Body": {
+      "Allergies": [
+        {
+          "Text": "Penicilin",
+          "CodeSystem": "SNOMED",
+          "Code": "294513009",
+          "Criticality": "low"
+        }
+      ],
+      "Problems": [
+        {
+          "Text": "Hypertenze",
+          "CodeSystem": "ICD-10",
+          "Code": "I10"
+        }
+      ],
+      "Medications": [
+        {
+          "Text": "Atorvastatin 20 mg",
+          "Dosage": "1-0-0",
+          "Route": "per os"
+        }
+      ],
+      "Vaccinations": [
+        {
+          "Text": "COVID-19",
+          "Date": "2023-10-01"
+        }
+      ],
+      "Implants": [
+        {
+          "Text": "Stent koron\u00E1rn\u00ED"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "Id": "b0b771fb-8041-4bec-9235-90792181d955",
+    "Rid": "1000000014",
+    "Created": "2025-08-17T16:32:40.335741Z",
+    "Tests": [
+      "Gluk\u00F3za",
+      "Hb"
+    ],
+    "RequesterIco": "12345678",
+    "RequesterName": "Nemocnice Alfa a.s.",
+    "Status": "received"
+  }
+]

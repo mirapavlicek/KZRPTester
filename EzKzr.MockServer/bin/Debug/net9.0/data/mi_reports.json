@@ -1,0 +1,14 @@
+[
+  {
+    "Header": {
+      "Rid": "1000000014",
+      "Performed": "2025-08-10T16:32:40.334497Z",
+      "Modality": "US",
+      "Performer": "MUDr. Beta",
+      "FacilityName": "Poliklinika Beta s.r.o."
+    },
+    "Indication": "Kontroln\u00ED vy\u0161et\u0159en\u00ED",
+    "Findings": "Bez patrn\u00E9 patologie.",
+    "Conclusion": "N\u00E1lez v norm\u011B."
+  }
+]
