@@ -34,3 +34,4 @@
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.pdb
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.genruntimeconfig.cache
 /Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/ref/EzKzr.MockServer.dll
+/Users/mira/Projects/KZRPTester/EzKzr.MockServer/obj/Debug/net9.0/EzKzr.MockServer.sourcelink.json

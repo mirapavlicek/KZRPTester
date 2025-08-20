@@ -45,6 +45,44 @@ public static class Program
     ];
 
     private static readonly ConcurrentDictionary<Guid, Notification> Notifications = new();
+    private static readonly List<PatientSummary> PatientSummaries =
+[
+    new PatientSummary
+    {
+        Header = new PatientHeader
+        {
+            Rid = "1234567891",
+            GivenName = "Jan",
+            FamilyName = "Novák",
+            DateOfBirth = new DateOnly(1980, 1, 15),
+            Gender = "M"
+        },
+        Body = new PatientSummaryBody
+        {
+            Allergies =
+            [
+                new Allergy { Text = "Alergie na penicilin", CodeSystem = "SNOMED", Code = "91936005", Criticality = "high" }
+            ],
+            Vaccinations =
+            [
+                new Vaccination { Text = "Tetanus", Date = new DateOnly(2020, 5, 20) }
+            ],
+            Problems =
+            [
+                new Problem { Text = "Diabetes mellitus 2. typu", CodeSystem = "ICD-10", Code = "E11" }
+            ],
+            Medications =
+            [
+                new Medication { Text = "Metformin 500 mg", Dosage = "1-0-1", Route = "per os" }
+            ],
+            Implants =
+            [
+                new Implant { Text = "Koronární stent", Date = new DateOnly(2019, 9, 1) }
+            ],
+            AdvanceDirectives = "DNAR"
+        }
+    }
+];
 
     public static void Main(string[] args)
     {
@@ -168,6 +206,46 @@ public static class Program
 
         // Notifikace KRPZS
         MapNotificationEndpoints(krpzs);
+
+        // ----- Patient Summary (EU PS/IPS mock) -----
+        var ps = api.MapGroup("/ps");
+
+        // GET /api/v1/ps/rid/{zadostId}?rid=...
+        ps.MapGet("/rid/{zadostId:guid}", (Guid zadostId, string rid, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(rid)) errs.Add("rid je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var psu = PatientSummaries.FirstOrDefault(x => x.Header.Rid == rid);
+            if (psu is null) return NotFound($"Pacient s RID {rid} nenalezen.", zadostId);
+
+            return Ok(psu, zadostId, "OK", popis: "PatientSummary");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
+
+        // GET /api/v1/ps/osoba/{zadostId}?jmeno=...&prijmeni=...&datumNarozeni=YYYY-MM-DD
+        ps.MapGet("/osoba/{zadostId:guid}", (Guid zadostId, string jmeno, string prijmeni, DateOnly datumNarozeni, string? ucel, DateTime? datum) =>
+        {
+            var errs = ValidateCommon(zadostId, ucel, datum).ToList();
+            if (string.IsNullOrWhiteSpace(jmeno)) errs.Add("jmeno je povinné.");
+            if (string.IsNullOrWhiteSpace(prijmeni)) errs.Add("prijmeni je povinné.");
+            if (errs.Count > 0) return Bad(errs, zadostId, subStav: "Validace", http: 400);
+
+            var psu = PatientSummaries.FirstOrDefault(x =>
+                string.Equals(x.Header.GivenName, jmeno, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.Header.FamilyName, prijmeni, StringComparison.OrdinalIgnoreCase) &&
+                x.Header.DateOfBirth == datumNarozeni);
+
+            if (psu is null) return NotFound("Pacient nenalezen.", zadostId);
+
+            return Ok(psu, zadostId, "OK", popis: "PatientSummary");
+        })
+        .Produces(StatusCodes.Status200OK, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status400BadRequest, contentType: MediaTypeNames.Application.Json)
+        .Produces(StatusCodes.Status404NotFound, contentType: MediaTypeNames.Application.Json);
 
         // ----- KRZP (zdravotničtí pracovníci) -----
         var krzp = api.MapGroup("/krzp");
@@ -456,4 +534,63 @@ public static class Program
         public DateTime Vytvoreno { get; set; }
         public string Stav { get; set; } = "aktivni";
     }
+    // Patient Summary DTOs (odpovídá rozsahu CZ PS a IPS sekcím)
+public sealed class PatientHeader
+{
+    public string Rid { get; set; } = default!;
+    public string GivenName { get; set; } = default!;
+    public string FamilyName { get; set; } = default!;
+    public DateOnly DateOfBirth { get; set; }
+    public string Gender { get; set; } = default!;
+}
+
+public sealed class PatientSummary
+{
+    public PatientHeader Header { get; set; } = default!;
+    public PatientSummaryBody Body { get; set; } = default!;
+}
+
+public sealed class PatientSummaryBody
+{
+    public List<Allergy>? Allergies { get; set; }
+    public List<Vaccination>? Vaccinations { get; set; }
+    public List<Problem>? Problems { get; set; }
+    public List<Medication>? Medications { get; set; }
+    public List<Implant>? Implants { get; set; }
+    public string? AdvanceDirectives { get; set; }
+}
+
+public sealed class Allergy
+{
+    public string Text { get; set; } = default!;
+    public string? CodeSystem { get; set; }
+    public string? Code { get; set; }
+    public string? Criticality { get; set; } // low|high|unable-to-assess
+}
+
+public sealed class Vaccination
+{
+    public string Text { get; set; } = default!;
+    public DateOnly? Date { get; set; }
+}
+
+public sealed class Problem
+{
+    public string Text { get; set; } = default!;
+    public string? CodeSystem { get; set; }
+    public string? Code { get; set; }
+}
+
+public sealed class Medication
+{
+    public string Text { get; set; } = default!;
+    public string? Dosage { get; set; }
+    public string? Route { get; set; }
+}
+
+public sealed class Implant
+{
+    public string Text { get; set; } = default!;
+    public DateOnly? Date { get; set; }
+}
 }
